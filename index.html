@@ -25,7 +25,7 @@
                         </div>
                     </div>
 
-                    <div class="radio-display">
+                    <div class="radio-screen">
                         <div class="needle" id="needle"></div>
 
                         <label for="office-code">
@@ -101,10 +101,69 @@
                     <!-- <div class="tuning-dial">
                     <div class="dial-label">Tuning</div>
                     <div class="dial-knob" id="tuningKnob"></div>
-                </div> -->
+                    </div> -->
                 </div>
 
-                <div class="radio-speaker"></div>
+                <div class="radio-speaker">
+                    <div
+                        style="
+                            font-family: Monoton, sans-serif;
+                            font-size: 0.8rem;
+                            color: #ccc;
+                            text-shadow: 0 4px 2px black;
+                        "
+                    >
+                        = = =
+                    </div>
+                </div>
+
+                <div
+                    style="
+                        font-family:
+                            Fascinate Inline,
+                            sans-serif;
+                        font-size: 3.5rem;
+                        color: #ccc;
+                        text-shadow: 0 4px 1px black;
+                        position: absolute;
+                        margin-left: 15px;
+                        bottom: 0;
+                        left: 0;
+                    "
+                >
+                    NOAA
+                </div>
+                <div
+                    style="
+                        font-family:
+                            Fascinate Inline,
+                            sans-serif;
+                        font-size: 3.5rem;
+                        color: #ccc;
+                        text-shadow: 0 4px 1px black;
+                        position: absolute;
+                        margin-right: 15px;
+                        bottom: 0;
+                        right: 0;
+                    "
+                >
+                    NWS
+                </div>
+                <div
+                    style="
+                        font-family: Monoton, sans-serif;
+                        font-size: 1rem;
+                        color: #ccc;
+                        text-shadow: 0 4px 2px black;
+                        position: absolute;
+                        margin-bottom: 5px;
+                        bottom: 0;
+                        left: 50%;
+                        transform: translateX(-50%);
+                    "
+                >
+                    <!-- weather.gov -->
+                </div>
             </div>
         </div>
 
@@ -182,8 +241,8 @@
 
         <script defer>
             /**
-                          String and message utils
-                        **/
+            String and message utils
+            **/
 
             // Function to convert US state abbreviations to full names
             function stateAbbrToFullName(text) {
@@ -765,6 +824,8 @@
             const pauseButton = document.getElementById("pause-button");
             const stopButton = document.getElementById("stop-button");
 
+            const needle = document.getElementById("needle");
+
             const voiceSwitch = document.getElementById("voice-switch");
 
             const elevenlabsUsage = document.getElementById("elevenlabs-usage");
@@ -949,8 +1010,23 @@
                 voiceSwitch.disabled = true;
 
                 soundEffectButtonClick();
+
                 playWhiteNoise(5);
-                await new Promise((resolve) => setTimeout(resolve, 4000));
+
+                for (let i = 0; i < 4; i++) {
+                    setTimeout(() => {
+                        const percent =
+                            Math.floor(Math.random() * (80 - 10)) + 10;
+                        needle.style.left = percent + "%";
+                    }, i * 1000);
+                }
+
+                // bring it home...
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                needle.style.left = "10%";
+
+                await new Promise((resolve) => setTimeout(resolve, 3000));
+                needle.style.left = "0%";
 
                 if (useNaturalVoice) {
                     // speakWithElevenLabs(
@@ -989,7 +1065,6 @@
                         speechUtterance.volume = 0.25;
 
                         speechUtterance.onboundary = (event) => {
-                            const needle = document.getElementById("needle");
                             if (event.name === "word") {
                                 const percent =
                                     (event.charIndex /

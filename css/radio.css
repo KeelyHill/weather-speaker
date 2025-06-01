@@ -1,4 +1,8 @@
+/* Monospaced */
 @import url("https://fonts.googleapis.com/css2?family=Kode+Mono&family=Doto&display=swap");
+
+/* Logo styleized */
+@import url("https://fonts.googleapis.com/css2?family=Monoton&family=Fascinate+Inline&display=swap");
 
 body {
     background: #080808;
@@ -38,15 +42,15 @@ select {
     /* background: #4f2d0b; */
     background: #2d1803;
 
+    border: 4px solid #7c6048;
     border-radius: 30px;
 
     display: flex;
     flex-direction: column;
 
     /* box-shadow: 0 0px 50px rgba(200, 190, 150, 0.5); */
-    box-shadow: 0 0px 200px rgba(255, 255, 255, 0.7);
+    box-shadow: 0 0px 200px rgba(255, 255, 255, 0.3);
     /* box-shadow: 0 5px 5px white; */
-
     /* spotlight */
     /* box-shadow: 0 -400px 500px rgba(255, 250, 220, 1); */
 }
@@ -57,15 +61,15 @@ select {
     /* margin: 50px auto auto auto; */
     /* background: url("/oak.jpg") center/cover no-repeat; */
 
-    border: 0px solid #1e1710;
     border-radius: 30px;
+    border: 5px solid #1e1710;
+
+    box-shadow: inset 0 0 3px #1e1710;
 
     padding: 2rem;
-    margin: 20px;
+    margin: 30px;
 
-    display: flex;
-    flex-direction: column;
-    /* gap: 1rem; */
+    position: relative;
 }
 
 .radio {
@@ -86,7 +90,17 @@ select {
         #44301e 12px,
         #44301e 20px,
         #382613 20px,
-        #382613 30px
+        #382613 30px,
+        #664522 30px,
+        #664522 31px,
+        #44301e 31px,
+        #44301e 34px,
+        #382613 34px,
+        #382613 36px,
+        #44301e 36px,
+        #44301e 39px,
+        #382613 39px,
+        #382613 46px
     );
     /* background-color: #3a2b1a; */
 }
@@ -101,7 +115,8 @@ select {
     width: 600px;
     height: 7px;
     /* background: #999; */
-    top: 83px;
+    top: -35px;
+    left: 0;
     transform: rotate(-5deg);
     transform-origin: left center;
     z-index: -1;
@@ -146,9 +161,10 @@ select {
     cursor: grab;
 }
 
-.radio-display {
+.radio-screen {
     font-family: "Doto", "Kode Mono", monospace;
-    font-size: 1.4rem;
+    font-size: 1.6rem;
+    font-weight: bold;
 
     padding: 0 0.6em;
     background: #111;
@@ -158,6 +174,8 @@ select {
     position: relative;
     color: rgba(249, 199, 27, 1);
     align-items: center;
+
+    overflow: hidden;
 
     background:
         linear-gradient(
@@ -178,6 +196,7 @@ input[type="text"] {
     border-radius: 4px;
     background: none;
     color: inherit;
+    font-weight: inherit;
 }
 
 #office-code {
@@ -189,7 +208,7 @@ input[type="text"] {
     top: 0;
     bottom: 0;
     width: 2px;
-    background: red;
+    background: #dd1111;
     left: 0%;
     transition: left 1s ease-out;
 }
@@ -209,12 +228,18 @@ input[type="text"] {
         repeat;
     background-color: #111;
 
-    box-shadow:
-        inset 9px 9px 15px rgba(255, 255, 255, 0.05),
-        inset -9px -9px 15px rgba(0, 0, 0, 0.3);
+    /* box-shadow:
+        inset 9px 9px 15px rgba(255, 255, 255, 0.1),
+        inset -9px -9px 15px rgba(0, 0, 0, 0.5); */
 
-    border: 2px solid #444;
+    box-shadow: inset 0 0 25px rgba(255, 255, 255, 0.1);
+
+    border: 6px solid #111;
     border-radius: 35%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .radio-controls {
@@ -308,19 +333,19 @@ input:checked + .switch-label .slider::before {
     cursor: pointer;
     transition: background 0.2s;
 
-    box-shadow: 0 7px 0px black;
+    box-shadow: 0 10px 0px black;
 }
 
 .media-btn:hover {
     background: #444;
     transform: translateY(3px);
-    box-shadow: 0 4px 0px black;
+    box-shadow: 0 7px 0px black;
 }
 
 .media-btn:active {
     background: #777;
-    transform: translateY(7px);
-    box-shadow: 0 0;
+    transform: translateY(8px);
+    box-shadow: 0 2px 0px black;
 }
 
 /* Other */
