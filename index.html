@@ -816,15 +816,141 @@
 
             /* Event handeling */
 
-            fetchButton.addEventListener("click", fetchWeather);
+            fetchButton.addEventListener("click", function () {
+                soundEffectButtonClick();
+                fetchWeather();
+            });
 
-            const audioCtx = new (window.AudioContext ||
-                window.webkitAudioContext)();
+            function soundEffectButtonClick() {
+                const ctx = new (window.AudioContext ||
+                    window.webkitAudioContext)();
+                const duration = 0.02; // seconds
+                const bufferSize = ctx.sampleRate * duration * 10;
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    const decay = Math.pow(1 - i / bufferSize, 3); // smoother decay
+                    data[i] = (Math.random() * 2 - 1) * decay;
+                }
+
+                const source = ctx.createBufferSource();
+                source.buffer = buffer;
+
+                const gain = ctx.createGain();
+                gain.gain.setValueAtTime(1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(
+                    0.001,
+                    ctx.currentTime + duration,
+                );
+                gain.gain.setValueAtTime(1, ctx.currentTime + duration + 0.07);
+                gain.gain.exponentialRampToValueAtTime(
+                    0.001,
+                    ctx.currentTime + duration + 0.07 + duration,
+                );
+
+                const filter = ctx.createBiquadFilter();
+                filter.type = "lowpass";
+                filter.Q.value = 0.7;
+                filter.frequency.setValueAtTime(2000, ctx.currentTime);
+                filter.frequency.setValueAtTime(
+                    1000,
+                    ctx.currentTime + duration + 0.07,
+                );
+
+                source.connect(filter).connect(gain).connect(ctx.destination);
+                source.start();
+            }
+
+            function playWhiteNoise(duration = 6) {
+                const audioCtx = new (window.AudioContext ||
+                    window.webkitAudioContext)();
+                const bufferSize = duration * audioCtx.sampleRate;
+                const noiseBuffer = audioCtx.createBuffer(
+                    1,
+                    bufferSize,
+                    audioCtx.sampleRate,
+                );
+                const output = noiseBuffer.getChannelData(0);
+
+                let i = 0;
+                while (i < bufferSize) {
+                    output[i] = Math.random() * 2 - 1;
+
+                    if (Math.random() < 0.001) {
+                        const burstLength =
+                            500 + Math.floor(Math.random() * 1000);
+                        const burstAmplitude = 0.5 + Math.random() * 0.5;
+                        for (
+                            let j = 0;
+                            j < burstLength && i + j < bufferSize;
+                            j++
+                        ) {
+                            output[i + j] =
+                                (Math.random() * 2 - 1) * burstAmplitude;
+                        }
+                        i += burstLength;
+                    } else {
+                        i++;
+                    }
+                }
+
+                const whiteNoise = audioCtx.createBufferSource();
+                whiteNoise.buffer = noiseBuffer;
+                whiteNoise.loop = false;
+
+                const gainNode = audioCtx.createGain();
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = "lowpass";
+                // filter.frequency.setValueAtTime(10000, audioCtx.currentTime); // Cut highs
+                filter.frequency.linearRampToValueAtTime(
+                    3000,
+                    audioCtx.currentTime + duration / 4,
+                ); // Cut highs
+                filter.Q.value = 0.7;
+
+                const now = audioCtx.currentTime;
+                const MAX_GAIN = 0.1;
+                const ZERO_GAIN = 0.001;
+
+                gainNode.gain.setValueAtTime(ZERO_GAIN, now);
+                gainNode.gain.linearRampToValueAtTime(
+                    MAX_GAIN,
+                    now + duration / 8,
+                );
+                gainNode.gain.linearRampToValueAtTime(
+                    MAX_GAIN / 2,
+                    now + (duration / 8) * 2,
+                );
+                gainNode.gain.linearRampToValueAtTime(
+                    MAX_GAIN,
+                    now + (duration / 8) * 3,
+                );
+                gainNode.gain.linearRampToValueAtTime(
+                    ZERO_GAIN,
+                    now + duration,
+                );
+
+                whiteNoise
+                    .connect(filter)
+                    .connect(gainNode)
+                    .connect(audioCtx.destination);
+                whiteNoise.start(now);
+                whiteNoise.stop(now + duration);
+            }
+
+            voiceSwitch.addEventListener("change", function () {
+                soundEffectButtonClick();
+            });
 
             // Speech controls
             playButton.addEventListener("click", async function () {
                 const useNaturalVoice = voiceSwitch.checked;
                 voiceSwitch.disabled = true;
+
+                soundEffectButtonClick();
+                playWhiteNoise(5);
+                await new Promise((resolve) => setTimeout(resolve, 4000));
 
                 if (useNaturalVoice) {
                     // speakWithElevenLabs(
@@ -860,6 +986,8 @@
                         ));
 
                     if (speechUtterance) {
+                        speechUtterance.volume = 0.25;
+
                         speechUtterance.onboundary = (event) => {
                             const needle = document.getElementById("needle");
                             if (event.name === "word") {
@@ -882,12 +1010,14 @@
             });
 
             pauseButton.addEventListener("click", function () {
+                soundEffectButtonClick();
                 if (speechSynth.speaking) {
                     speechSynth.pause();
                 }
             });
 
             stopButton.addEventListener("click", function () {
+                soundEffectButtonClick();
                 voiceSwitch.disabled = false;
                 speechSynth.cancel();
             });
