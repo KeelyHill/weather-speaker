@@ -5,141 +5,128 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>NSW Weather Talker</title>
         <!-- <link rel="stylesheet" href="css/styles.css" /> -->
-        <!-- <link rel="stylesheet" href="css/radio.css" /> -->
+        <link rel="stylesheet" href="css/radio.css" />
     </head>
     <body>
-        <div class="container">
-            <header>
-                <h1>NSW Weather Talker</h1>
-            </header>
+        <div class="radio-case">
+            <div class="radio">
+                <div class="antenna"></div>
 
-            <section class="input-section">
-                <div class="form-group">
-                    <label for="office-code">Office Code:</label>
-                    <!-- Use ?office="" to assign in URL -->
-                    <input
-                        type="text"
-                        id="office-code"
-                        placeholder="Enter office code (e.g., MTR)"
-                    />
-                    <span
-                        class="info-icon"
-                        style="cursor: pointer"
-                        onclick="toggleInfo()"
-                        >ℹ️</span
-                    >
-
-                    <div id="info-text" style="display: none; margin-top: 5px">
-                        Find yours
-                        <a
-                            href="https://www.weather.gov/srh/nwsoffices"
-                            target="_blank"
-                            >here</a
-                        >.
+                <div class="radio-top">
+                    <div>
+                        <!-- <div class="dial-label">Tune in</div> -->
+                        <div
+                            class="media-buttons"
+                            title="Fetch Weather Forcast"
+                        >
+                            <button class="media-btn" id="fetch-button">
+                                Tune in
+                            </button>
+                        </div>
                     </div>
-                    <script>
-                        function toggleInfo() {
-                            const infoText =
-                                document.getElementById("info-text");
-                            infoText.style.display =
-                                infoText.style.display === "none"
-                                    ? "block"
-                                    : "none";
-                        }
-                    </script>
-                </div>
-                <div class="action-buttons">
-                    <button id="fetch-button">Fetch Weather Discussion</button>
-                </div>
-                <div class="error-message" id="error-message"></div>
-            </section>
 
+                    <div class="radio-display">
+                        <div class="needle" id="needle"></div>
+
+                        <label for="office-code">
+                            <a
+                                href="https://upload.wikimedia.org/wikipedia/commons/0/05/NWS_Weather_Forecast_Offices.svg"
+                                target="_blank"
+                            >
+                                Office:
+                            </a>
+                        </label>
+
+                        <input type="text" id="office-code" placeholder="MTR" />
+                    </div>
+                </div>
+
+                <div class="radio-controls">
+                    <div class="toggle-switch">
+                        <div class="label-text">Classic<br />Voice</div>
+                        <input type="checkbox" id="voice-switch" />
+                        <label for="voice-switch" class="switch-label">
+                            <span class="slider"></span>
+                        </label>
+                        <div class="label-text">Natural<br />Voice</div>
+                    </div>
+
+                    <div class="media-buttons">
+                        <button
+                            class="media-btn media-btn-square"
+                            id="play-button"
+                        >
+                            <!-- ▶ -->
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    d="M8 5V19L19 12L8 5Z"
+                                    fill="currentColor"
+                                />
+                            </svg>
+                        </button>
+
+                        <button
+                            class="media-btn media-btn-square"
+                            id="pause-button"
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    d="M6 4H10V20H6V4ZM14 4H18V20H14V4Z"
+                                    fill="currentColor"
+                                />
+                            </svg>
+                        </button>
+                        <button
+                            class="media-btn media-btn-square"
+                            id="stop-button"
+                        >
+                            <svg
+                                viewBox="0 0 100 100"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="currentColor"
+                            >
+                                <rect x="20" y="20" width="60" height="60" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- <div class="tuning-dial">
+                    <div class="dial-label">Tuning</div>
+                    <div class="dial-knob" id="tuningKnob"></div>
+                </div> -->
+                </div>
+
+                <div class="radio-speaker"></div>
+            </div>
+        </div>
+
+        <div class="radio-platform"></div>
+
+        <div class="error-message" id="error-message">
+            Placeholder Error Message
+        </div>
+
+        <hr />
+        <hr />
+        <hr />
+
+        <div class="container">
             <div class="loading" id="loading">
                 <div class="loader"></div>
                 <p>Fetching weather discussion...</p>
             </div>
 
-            <section class="content-section" id="content-section">
-                <h2>Forecast Discussion</h2>
-                <div class="forecast-content" id="forecast-content"></div>
-
-                <div class="speech-controls">
-                    <button class="speech-button play" id="play-button">
-                        <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path d="M8 5V19L19 12L8 5Z" fill="currentColor" />
-                        </svg>
-                        Play
-                    </button>
-                    <button class="speech-button pause" id="pause-button">
-                        <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path
-                                d="M6 4H10V20H6V4ZM14 4H18V20H14V4Z"
-                                fill="currentColor"
-                            />
-                        </svg>
-                        Pause
-                    </button>
-                    <button class="speech-button stop" id="stop-button">
-                        <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path d="M6 4H18V20H6V4Z" fill="currentColor" />
-                        </svg>
-                        Stop
-                    </button>
-                </div>
-
-                <div class="speech-options">
-                    <div class="range-control">
-                        <label for="rate">Speed:</label>
-                        <input
-                            type="range"
-                            min="0.5"
-                            max="1.5"
-                            step="0.05"
-                            value="1"
-                            id="rate"
-                        />
-                        <span id="rate-value">1</span>
-                    </div>
-
-                    <div class="range-control">
-                        <label for="pitch">Pitch:</label>
-                        <input
-                            type="range"
-                            min="0.5"
-                            max="2"
-                            step="0.1"
-                            value="1"
-                            id="pitch"
-                        />
-                        <span id="pitch-value">1</span>
-                    </div>
-
-                    <div>
-                        <label for="voice-select">Voice:</label>
-                        <select id="voice-select"></select>
-                    </div>
-                </div>
-
+            <section>
                 <div class="elevenlabs-section">
-                    <h3>ElevenLabs TTS</h3>
+                    <h3>ElevenLabs Text to Speech</h3>
                     <div class="form-group">
                         <label for="elevenlabs-api-key">API Key:</label>
                         <input
@@ -159,16 +146,36 @@
                         />
                         <div id="elevenlabs-usage">xx%</div>
                     </div>
-                    <button id="elevenlabs-button" class="speech-button">
-                        Speak with ElevenLabs
-                    </button>
                 </div>
             </section>
 
+            <hr />
+
+            <h2>Text Processing</h2>
+
+            <div class="text-section">
+                <div
+                    class="raw-forecast-content preformat"
+                    id="raw-forecast-content"
+                ></div>
+                <div style="font-size: 40px; align-items: center">→</div>
+                <div
+                    class="forecast-content preformat"
+                    id="forecast-content"
+                ></div>
+            </div>
+
+            <hr />
+
             <footer>
                 <p>
-                    Weather data sourced from the National Weather Service. This
-                    is an toy application and not affiliated with the NWS.
+                    "Weather Talker", by
+                    <a href="https://keelyhill.com">Keely Hill</a>
+                    <br />
+                    <br />
+                    Weather data sourced from the National Weather Service.
+                    <br />
+                    This is an toy application and not affiliated with the NWS.
                 </p>
             </footer>
         </div>
@@ -407,35 +414,91 @@
 
                 // manually do the summary since it's format is a bit different
 
+                const now = new Date();
+
+                // Append current date and time in plain English
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const period = hours >= 12 ? "PM" : "AM";
+                const hour12 = hours % 12 || 12; // Convert to 12-hour format
+
+                // Get day of week and month names
+                const dayNames = [
+                    "Sunday",
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                ];
+                const monthNames = [
+                    "January",
+                    "February",
+                    "March",
+                    "April",
+                    "May",
+                    "June",
+                    "July",
+                    "August",
+                    "September",
+                    "October",
+                    "November",
+                    "December",
+                ];
+
+                const dayName = dayNames[now.getDay()];
+                const monthName = monthNames[now.getMonth()];
+                const dayOfMonth = now.getDate();
+
+                // Format time in words
+                const hourInWords = numberToWords(hour12);
+                var minuteInWords = numberToWords(minutes);
+                if (minutes === 0) {
+                    minuteInWords = "o'clock";
+                } else if (minutes < 10) {
+                    minuteInWords = `o' ${numberToWords(minutes)}`;
+                }
+
+                const dayInWords = numberToOrdinal(dayOfMonth);
+
+                var greetingWords = "Hello";
+
+                if (hours > 3 && hours < 11) {
+                    greetingWords = "Good morning";
+                } else if (hours > 12 && hours < 19) {
+                    greetingWords = "Good afternoon";
+                } else if (hours > 19) {
+                    greetingWords = "Good evening";
+                }
+
+                if (glob_users_name) {
+                    newText += `${greetingWords}, ${glob_users_name}! `;
+                } else {
+                    newText += `${greetingWords}! `;
+                }
+
+                newText += `It is ${hourInWords} ${minuteInWords} ${period} on ${dayName}, ${monthName} ${dayInWords}. `;
+
                 // lower case makes TTS read it better
                 newText += summarySectionDetailSplit[0].replace(
                     "Area Forecast Discussion",
-                    "Area forecast discussion for",
+                    "Here's the area forecast discussion from the",
                 );
 
                 newText += stateAbbrToFullName(
                     summarySectionDetailSplit[1],
                 ).replace("National Weather Service", "");
 
-                newText += ", issued at ";
+                newText += "office, issued at ";
                 newText +=
-                    convertFullTimeDate(summarySectionDetailSplit[2]) + ", ";
-
-                const now = new Date();
-                const hours = now.getHours();
-                const minutes = now.getMinutes();
-                const period = hours >= 12 ? "PM" : "AM";
-                const hourInWords = numberToWords(hours % 12 || 12); // Convert 0 to 12 for 12-hour format
-                const minuteInWords =
-                    minutes === 0 ? "o'clock" : numberToWords(minutes);
-                newText += `it is now ${hourInWords} ${minuteInWords} ${period}. `;
-                newText += "\n\n";
+                    convertFullTimeDate(summarySectionDetailSplit[2]) + ".\n\n";
 
                 // add the rest of it
                 newText += summarySectionSplit[4];
 
                 // remove top and summary section from the rest
-                sections.splice(0, 2);
+                sections.splice(0, 1);
                 // remove AFD footer
                 sections.pop();
 
@@ -446,9 +509,9 @@
 
                     const allowSection = true; //    /^\W*\.LONG TERM\b/i.test(sectionText);
 
-                    const ignoreSection =
-                        /^\W*\.MTR\b/i.test(sectionText) ||
-                        /^\W*\.AVIATION\b/i.test(sectionText);
+                    const ignoreSection = false;
+                    // /^\W*\.MTR\b/i.test(sectionText) ||
+                    // /^\W*\.AVIATION\b/i.test(sectionText);
 
                     if (allowSection && !ignoreSection) {
                         newText += sectionText;
@@ -511,11 +574,12 @@
                 ///
 
                 loadingIndicator.style.display = "block";
-                contentSection.style.display = "none";
                 errorMessage.style.display = "none";
 
                 // Construct URL
-                const url = `https://forecast.weather.gov/product.php?site=NWS&product=AFD&issuedby=${officeCodeField.value}`;
+                const url = `https://forecast.weather.gov/product.php?site=NWS&product=AFD&format=txt&issuedby=${officeCodeField.value}`;
+
+                console.log("NWS URL:", url);
 
                 // Use CORS proxy to avoid CORS issues
                 // const proxyUrl = `https://cors-anywhere.herokuapp.com/${url}`;
@@ -552,6 +616,8 @@
                             );
                         }
 
+                        rawForecastContent.textContent = discussionText;
+
                         // Clean up the text
                         discussionText = makeTextSpeakable(discussionText);
 
@@ -559,23 +625,6 @@
                         forecastContent.textContent = discussionText;
 
                         loadingIndicator.style.display = "none";
-                        contentSection.style.display = "block";
-
-                        // Create new utterance for this text
-                        if (speechUtterance) {
-                            speechSynth.cancel(); // Cancel any ongoing speech
-                        }
-
-                        speechUtterance = new SpeechSynthesisUtterance(
-                            discussionText,
-                        );
-                        const voices = speechSynthesis.getVoices();
-
-                        (v) => v.name === "Good News", // this one is fun
-                            (speechUtterance.voice = voices.find(
-                                (v) => v.name === "Ralph",
-                            ));
-                        updateSpeechSettings();
                     })
                     .catch((error) => {
                         console.error("Error fetching forecast:", error);
@@ -610,6 +659,8 @@
                         const charUsed = data.subscription.character_count;
                         const charLimit = data.subscription.character_limit;
                         const percentUsed = (charUsed / charLimit) * 100;
+
+                        glob_users_name = data.first_name;
 
                         elevenlabsUsage.textContent = `${percentUsed.toFixed(2)}% used`;
                         console.log(
@@ -689,6 +740,7 @@
                         // Create audio element and play audio
                         const audioUrl = URL.createObjectURL(blob);
                         const audio = new Audio(audioUrl);
+                        console.log(audioUrl);
                         audio.play();
 
                         // Hide loading indicator
@@ -705,23 +757,23 @@
                           UI/UX Control
                         **/
 
+            var glob_users_name = "";
             const officeCodeField = document.getElementById("office-code");
 
             const fetchButton = document.getElementById("fetch-button");
             const playButton = document.getElementById("play-button");
             const pauseButton = document.getElementById("pause-button");
             const stopButton = document.getElementById("stop-button");
-            const elevenLabsButton =
-                document.getElementById("elevenlabs-button");
+
+            const voiceSwitch = document.getElementById("voice-switch");
+
             const elevenlabsUsage = document.getElementById("elevenlabs-usage");
-            const rateInput = document.getElementById("rate");
-            const rateValue = document.getElementById("rate-value");
-            const pitchInput = document.getElementById("pitch");
-            const pitchValue = document.getElementById("pitch-value");
             const voiceSelect = document.getElementById("voice-select");
             const forecastContent = document.getElementById("forecast-content");
+            const rawForecastContent = document.getElementById(
+                "raw-forecast-content",
+            );
             const loadingIndicator = document.getElementById("loading");
-            const contentSection = document.getElementById("content-section");
             const errorMessage = document.getElementById("error-message");
 
             let speechSynth = window.speechSynthesis;
@@ -729,14 +781,6 @@
             let voices = [];
 
             /* Page load logic */
-
-            // get office code from URL if exists
-            const urlParams = new URLSearchParams(window.location.search);
-            officeCodeField.value = urlParams.get("office");
-
-            if (officeCodeField.value) {
-                fetchWeather();
-            }
 
             function saveApiKeyToCookies() {
                 const apiKey =
@@ -757,27 +801,82 @@
             }
 
             loadApiKeyFromCookies();
+            const apiKey = document.getElementById("elevenlabs-api-key").value;
+            if (apiKey) {
+                updateElevenLabsUsage(apiKey);
+            }
 
-            // Check if speech synthesis is supported
-            if (!("speechSynthesis" in window)) {
-                alert(
-                    "Your browser does not support speech synthesis. Please try a different browser.",
-                );
+            // get office code from URL if exists
+            const urlParams = new URLSearchParams(window.location.search);
+            officeCodeField.value = urlParams.get("office");
+
+            if (officeCodeField.value) {
+                fetchWeather();
             }
 
             /* Event handeling */
 
-            // Fetch weather discussion
             fetchButton.addEventListener("click", fetchWeather);
 
+            const audioCtx = new (window.AudioContext ||
+                window.webkitAudioContext)();
+
             // Speech controls
-            playButton.addEventListener("click", function () {
-                if (speechUtterance) {
-                    if (speechSynth.paused) {
-                        speechSynth.resume();
+            playButton.addEventListener("click", async function () {
+                const useNaturalVoice = voiceSwitch.checked;
+                voiceSwitch.disabled = true;
+
+                if (useNaturalVoice) {
+                    // speakWithElevenLabs(
+                    //     "Example. Unsettled weather returns today and continues into early next week.",
+                    // );
+                    // return;
+                    if (forecastContent.textContent) {
+                        speakWithElevenLabs(forecastContent.textContent);
                     } else {
-                        updateSpeechSettings();
-                        speechSynth.speak(speechUtterance);
+                        showError("No forecast text available to speak.");
+                    }
+                } else {
+                    // Check if speech synthesis is supported
+                    if (!("speechSynthesis" in window)) {
+                        alert(
+                            "Your browser does not support speech synthesis. Please try a different browser.",
+                        );
+                    }
+
+                    // Create new utterance for this text
+                    if (speechUtterance && !speechSynth.paused) {
+                        speechSynth.cancel(); // Cancel any ongoing speech
+                    }
+
+                    speechUtterance = new SpeechSynthesisUtterance(
+                        forecastContent.textContent,
+                    );
+                    const voices = speechSynthesis.getVoices();
+
+                    (v) => v.name === "Good News", // this one is fun
+                        (speechUtterance.voice = voices.find(
+                            (v) => v.name === "Ralph",
+                        ));
+
+                    if (speechUtterance) {
+                        speechUtterance.onboundary = (event) => {
+                            const needle = document.getElementById("needle");
+                            if (event.name === "word") {
+                                const percent =
+                                    (event.charIndex /
+                                        speechUtterance.text.length) *
+                                    100;
+                                console.log(`Progress: ${percent.toFixed(2)}%`);
+                                needle.style.left = percent + "%";
+                            }
+                        };
+
+                        if (speechSynth.paused) {
+                            speechSynth.resume();
+                        } else {
+                            speechSynth.speak(speechUtterance);
+                        }
                     }
                 }
             });
@@ -789,50 +888,15 @@
             });
 
             stopButton.addEventListener("click", function () {
+                voiceSwitch.disabled = false;
                 speechSynth.cancel();
             });
-
-            // Update speech settings when controls change
-            function updateSpeechSettings() {
-                if (!speechUtterance) return;
-
-                const selectedVoice = voices[voiceSelect.value];
-                speechUtterance.voice = selectedVoice;
-                speechUtterance.rate = parseFloat(rateInput.value);
-                speechUtterance.pitch = parseFloat(pitchInput.value);
-            }
 
             // Show error message
             function showError(message) {
                 errorMessage.textContent = message;
                 errorMessage.style.display = "block";
             }
-
-            // Update display values when sliders change
-            rateInput.addEventListener("input", function () {
-                rateValue.textContent = rateInput.value;
-                updateSpeechSettings();
-            });
-
-            pitchInput.addEventListener("input", function () {
-                pitchValue.textContent = pitchInput.value;
-                updateSpeechSettings();
-            });
-
-            voiceSelect.addEventListener("change", updateSpeechSettings);
-
-            // ElevenLabs button click handler
-            elevenLabsButton.addEventListener("click", function () {
-                speakWithElevenLabs(
-                    "Example. Unsettled weather returns today and continues into early next week.",
-                );
-                return;
-                if (forecastContent.textContent) {
-                    speakWithElevenLabs(forecastContent.textContent);
-                } else {
-                    showError("No forecast text available to speak.");
-                }
-            });
 
             // Handle CORS errors with alternative approach
             window.addEventListener("error", function (e) {

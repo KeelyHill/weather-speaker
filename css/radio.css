@@ -1,0 +1,348 @@
+@import url("https://fonts.googleapis.com/css2?family=Kode+Mono&family=Doto&display=swap");
+
+body {
+    background: #080808;
+
+    font-family: "Kode Mono", monospace;
+
+    margin: 0;
+    padding: 2rem;
+    color: #999;
+}
+
+#error-message {
+    background: #bb5555;
+    border-radius: 1em;
+    padding: 1em;
+}
+
+button,
+input,
+textarea,
+select {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.radio-platform {
+    background: #111;
+    border-radius: 1em;
+    height: 100px;
+}
+
+.radio-case {
+    width: 700px;
+
+    margin: 50px auto auto auto;
+
+    /* background: #4f2d0b; */
+    background: #2d1803;
+
+    border-radius: 30px;
+
+    display: flex;
+    flex-direction: column;
+
+    /* box-shadow: 0 0px 50px rgba(200, 190, 150, 0.5); */
+    box-shadow: 0 0px 200px rgba(255, 255, 255, 0.7);
+    /* box-shadow: 0 5px 5px white; */
+
+    /* spotlight */
+    /* box-shadow: 0 -400px 500px rgba(255, 250, 220, 1); */
+}
+
+.radio {
+    /* width: 500px;
+    height: 320px; */
+    /* margin: 50px auto auto auto; */
+    /* background: url("/oak.jpg") center/cover no-repeat; */
+
+    border: 0px solid #1e1710;
+    border-radius: 30px;
+
+    padding: 2rem;
+    margin: 20px;
+
+    display: flex;
+    flex-direction: column;
+    /* gap: 1rem; */
+}
+
+.radio {
+    /* background: repeating-linear-gradient(
+        90deg,
+        #3e3022 0px,
+        #3e3022 10px,
+        #2f2419 10px,
+        #2f2419 25px
+    ); */
+
+    background: repeating-linear-gradient(
+        90deg,
+        #44301e 0px,
+        #44301e 6px,
+        #382613 6px,
+        #382613 12px,
+        #44301e 12px,
+        #44301e 20px,
+        #382613 20px,
+        #382613 30px
+    );
+    /* background-color: #3a2b1a; */
+}
+
+.radio a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.antenna {
+    position: absolute;
+    width: 600px;
+    height: 7px;
+    /* background: #999; */
+    top: 83px;
+    transform: rotate(-5deg);
+    transform-origin: left center;
+    z-index: -1;
+    /* box-shadow: 0 0 10px #444; */
+
+    background: linear-gradient(to top, #999 50%, #fff);
+}
+
+.antenna::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: rotate(-2deg) translateY(-60%) translateX(50%);
+    width: 5px;
+    height: 10px;
+    background: #aaa;
+    border-radius: 20%;
+    box-shadow: -2px 0px 4px #555;
+}
+
+.radio-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dial-label {
+    text-align: center;
+    color: #222;
+    margin-bottom: 0.5rem;
+}
+
+.dial-knob {
+    width: 60px;
+    height: 60px;
+    background: radial-gradient(circle at 30% 30%, #ccc, #444);
+    border-radius: 50%;
+    box-shadow:
+        inset -3px -3px 6px #000,
+        inset 3px 3px 6px #888;
+    cursor: grab;
+}
+
+.radio-display {
+    font-family: "Doto", "Kode Mono", monospace;
+    font-size: 1.4rem;
+
+    padding: 0 0.6em;
+    background: #111;
+    border: 2px solid #222;
+    border-radius: 16px;
+    margin: 0 1rem;
+    position: relative;
+    color: rgba(249, 199, 27, 1);
+    align-items: center;
+
+    background:
+        linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.2) 0%,
+            transparent 30%
+        ),
+        #000;
+    box-shadow: inset 0 0 12px rgba(249, 199, 27, 0.3);
+}
+
+input[type="text"] {
+    flex-grow: 1;
+    padding: 3px;
+    margin: 12px;
+
+    border: 1px solid #330;
+    border-radius: 4px;
+    background: none;
+    color: inherit;
+}
+
+#office-code {
+    width: 4em;
+}
+
+.needle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: red;
+    left: 0%;
+    transition: left 1s ease-out;
+}
+
+.radio-speaker {
+    height: 300px;
+    width: 400px;
+    margin: auto;
+    /* background: repeating-radial-gradient(circle, #333 0 2px, #222 2px 4px); */
+
+    background-repeat: repeat;
+
+    background:
+        radial-gradient(#222 10%, transparent 16%) 0 0 / 20px 20px,
+        radial-gradient(#222 10%, transparent 16%) 10px 10px / 20px 20px,
+        radial-gradient(#222 10%, transparent 16%) 0 0 / 8px 8px,
+        repeat;
+    background-color: #111;
+
+    box-shadow:
+        inset 9px 9px 15px rgba(255, 255, 255, 0.05),
+        inset -9px -9px 15px rgba(0, 0, 0, 0.3);
+
+    border: 2px solid #444;
+    border-radius: 35%;
+}
+
+.radio-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem 1rem;
+    gap: 2rem;
+}
+
+input[type="checkbox"] {
+    display: none;
+}
+
+.label-text {
+    color: #ccc;
+    text-align: center;
+    margin: 0 1em;
+    background: #222;
+    padding: 5px;
+    border-radius: 5px;
+    /* box-shadow: 0 2px black; */
+}
+
+.toggle-switch {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.switch-label input {
+    display: none;
+}
+
+.switch-label {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+    margin: 5px;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    background-color: #444;
+    border-radius: 34px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transition: 0.3s;
+    box-shadow: inset 0 0 10px #000;
+}
+
+.slider::before {
+    position: absolute;
+    content: "";
+    height: 40px;
+    width: 20px;
+    left: 4px;
+    bottom: -2px;
+    background-color: #bbb;
+    border-radius: 50%;
+    transition: 0.3s;
+    /* transform: translateX(-8px); */
+    box-shadow: 0 0 15px #000;
+}
+
+input:checked + .switch-label .slider::before {
+    transform: translateX(32px);
+}
+
+.media-buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+.media-btn-square {
+    width: 65px;
+    height: 65px;
+}
+
+.media-btn {
+    font-size: 1.5rem;
+    padding: 0.5rem 0.5rem;
+    background: #222;
+    color: #ccc;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    box-shadow: 0 7px 0px black;
+}
+
+.media-btn:hover {
+    background: #444;
+    transform: translateY(3px);
+    box-shadow: 0 4px 0px black;
+}
+
+.media-btn:active {
+    background: #777;
+    transform: translateY(7px);
+    box-shadow: 0 0;
+}
+
+/* Other */
+
+.text-section {
+    display: flex;
+    flex-direction: row;
+    max-height: 200px;
+}
+
+.text-section div {
+    margin: 0.3rem;
+}
+
+.preformat {
+    flex: 1;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    background: #f5f5f5;
+    padding: 1em;
+    border-radius: 4px;
+
+    font-family: monospace;
+    font-size: 1em;
+}
