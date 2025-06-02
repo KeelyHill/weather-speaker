@@ -24,10 +24,10 @@
                             </button>
 
                             <div
-                                id="bulb-tuned-in"
+                                id="tune-in-bulb"
                                 class="bulb"
                                 style="margin: auto 0"
-                                title="TODO TODO TODO"
+                                title="Tune in status"
                             ></div>
                         </div>
                     </div>
@@ -55,6 +55,11 @@
                             <span class="slider"></span>
                         </label>
                         <div class="label-text">Natural<br />Voice</div>
+                        <div
+                            id="eleven-labs-status-bulb"
+                            class="bulb"
+                            title="Connection to ElevenLabs"
+                        ></div>
                     </div>
 
                     <div class="media-buttons">
@@ -113,12 +118,6 @@
                 <div class="radio-middle">
                     <!-- Extra div here to have a vertical stack next to speaker -->
                     <div style="margin: 20px 0px">
-                        <div
-                            id="eleven-labs-status-bulb"
-                            class="bulb"
-                            title="Connection to ElevenLabs"
-                        ></div>
-
                         <div
                             id="bulb-todo"
                             class="bulb"
@@ -192,7 +191,11 @@
 
         <div class="radio-platform"></div>
 
-        <div class="error-message" id="error-message">
+        <div
+            class="error-message-box"
+            id="error-message-box"
+            style="display: none"
+        >
             Placeholder Error Message
         </div>
 
@@ -291,7 +294,8 @@
                     <br />
                     Weather data sourced from the National Weather Service.
                     <br />
-                    This is an toy application and not affiliated with the NWS.
+                    This is an toy application and not affiliated with the NWS
+                    or NOAA.
                 </p>
             </footer>
         </div>
@@ -311,6 +315,8 @@
                 "eleven-labs-status-bulb",
             );
 
+            const tuneInBulb = document.getElementById("tune-in-bulb");
+
             const voiceSwitch = document.getElementById("voice-switch");
 
             const elevenlabsUsage = document.getElementById("elevenlabs-usage");
@@ -320,7 +326,8 @@
                 "raw-forecast-content",
             );
             const loadingIndicator = document.getElementById("loading");
-            const errorMessage = document.getElementById("error-message");
+            const errorMessageBox =
+                document.getElementById("error-message-box");
 
             let speechSynth = window.speechSynthesis;
             let speechUtterance = null;
@@ -784,7 +791,12 @@
             function fetchWeather() {
                 console.log(`Office code: ${officeCodeField.value}`);
 
+                // reset stuff
+                tuneInBulb.classList.remove("error");
+                forecastContent.textContent = "";
+
                 if (!officeCodeField.value) {
+                    tuneInBulb.classList.add("error");
                     showError("Please enter office code.");
                     return;
                 }
@@ -798,7 +810,7 @@
                 ///
 
                 loadingIndicator.style.display = "block";
-                errorMessage.style.display = "none";
+                errorMessageBox.style.display = "none";
 
                 // Construct URL
                 const url = `https://forecast.weather.gov/product.php?site=NWS&product=AFD&format=txt&issuedby=${officeCodeField.value}`;
@@ -812,6 +824,7 @@
                 fetch(proxyUrl)
                     .then((response) => {
                         if (!response.ok) {
+                            tuneInBulb.classList.add("error");
                             throw new Error("Network response was not ok");
                         }
                         return response.text();
@@ -822,40 +835,50 @@
                         const doc = parser.parseFromString(html, "text/html");
 
                         // Look for pre tag or text content in the page
-                        let discussionText = "";
+                        let rawText = "";
                         const preElement = doc.querySelector("pre");
 
                         if (preElement) {
-                            discussionText = preElement.textContent;
+                            rawText = preElement.textContent;
                         } else {
                             // Fallback to searching for the content in other ways
                             const mainContent =
                                 doc.querySelector("main") || doc.body;
-                            discussionText = mainContent.textContent;
+                            rawText = mainContent.textContent;
                         }
 
-                        if (discussionText.trim() === "") {
+                        if (rawText.trim() === "") {
+                            tuneInBulb.classList.add("error");
                             throw new Error(
                                 "Could not find forecast discussion text",
                             );
                         }
 
-                        rawForecastContent.textContent = discussionText;
+                        if (!rawText.includes("AFD")) {
+                            tuneInBulb.classList.add("error");
+                            throw new Error(
+                                "Did not find 'AFD' in returned string.",
+                            );
+                        }
+
+                        rawForecastContent.textContent = rawText;
 
                         // Clean up the text
-                        discussionText = makeTextSpeakable(discussionText);
+                        discussionText = makeTextSpeakable(rawText);
 
                         // Format and display the text
                         forecastContent.textContent = discussionText;
 
                         loadingIndicator.style.display = "none";
+
+                        tuneInBulb.classList.add("on");
                     })
                     .catch((error) => {
                         console.error("Error fetching forecast:", error);
                         loadingIndicator.style.display = "none";
-                        showError(
-                            "Error fetching forecast discussion. This could be due to CORS restrictions. Please try another office code or visit the Weather Service website directly.",
-                        );
+                        tuneInBulb.classList.add("error");
+                        showError("Error fetching forecast discussion.");
+                        //  This could be due to CORS restrictions. Please try another office code or visit the Weather Service website directly.
                     });
             }
 
@@ -863,7 +886,17 @@
               Speaking stuff
             **/
 
-            function updateElevenLabsUsage(apiKey) {
+            function updateElevenLabsUsage() {
+                elevenLabsBulb.classList.remove("error");
+
+                const apiKey = getApiKeyFromCookies();
+
+                if (!apiKey) {
+                    elevenLabsBulb.classList.add("error");
+                    console.log("No ElevenLabs API Key");
+                    return;
+                }
+
                 fetch("https://api.elevenlabs.io/v1/user", {
                     method: "GET",
                     headers: {
@@ -909,21 +942,21 @@
                     document.getElementById("elevenlabs-voice").value;
 
                 if (!apiKey) {
-                    alert("Please enter your ElevenLabs API key");
+                    showError("Please enter your ElevenLabs API key");
                     return;
                 }
 
                 if (!voiceId) {
-                    alert("Please enter a ElevenLabs voice ID");
+                    showError("Please enter a ElevenLabs voice ID");
                     return;
                 }
 
                 if (!text || text.trim() === "") {
-                    alert("No text to speak");
+                    showError("No text to speak");
                     return;
                 }
 
-                updateElevenLabsUsage(apiKey);
+                updateElevenLabsUsage();
 
                 // Show loading indicator
                 const loadingIndicator = document.getElementById("loading");
@@ -959,7 +992,7 @@
                             );
                             console.log(response);
                         }
-                        updateElevenLabsUsage(apiKey);
+                        updateElevenLabsUsage();
                         return response.blob();
                     })
                     .then((blob) => {
@@ -985,18 +1018,20 @@
                 const apiKey =
                     document.getElementById("elevenlabs-api-key").value;
                 document.cookie = `elevenlabsApiKey=${encodeURIComponent(apiKey)}; path=/; max-age=31536000`;
+                updateElevenLabsUsage();
             }
 
-            function loadApiKeyFromCookies() {
+            function getApiKeyFromCookies() {
                 const cookies = document.cookie.split("; ");
                 for (const cookie of cookies) {
                     const [name, value] = cookie.split("=");
                     if (name === "elevenlabsApiKey") {
                         document.getElementById("elevenlabs-api-key").value =
                             decodeURIComponent(value);
-                        break;
+                        return decodeURIComponent(value);
                     }
                 }
+                return null;
             }
 
             function saveIgnoreSectionsToCookies() {
@@ -1061,6 +1096,7 @@
                 const voiceId =
                     document.getElementById("elevenlabs-voice").value;
                 document.cookie = `elevenlabsVoiceId=${encodeURIComponent(voiceId)}; path=/; max-age=31536000`;
+                updateElevenLabsUsage();
             }
 
             function loadVoiceIdFromCookies() {
@@ -1075,7 +1111,7 @@
                 }
             }
 
-            loadApiKeyFromCookies();
+            getApiKeyFromCookies();
             loadVoiceIdFromCookies();
             loadIgnoreSectionsFromCookies();
 
@@ -1089,7 +1125,7 @@
 
             const apiKey = document.getElementById("elevenlabs-api-key").value;
             if (apiKey) {
-                updateElevenLabsUsage(apiKey);
+                updateElevenLabsUsage();
             }
 
             // get office code from URL if exists
@@ -1227,6 +1263,12 @@
 
             voiceSwitch.addEventListener("change", function () {
                 soundEffectButtonClick();
+
+                // Update UI if we plan to use this.
+
+                if (voiceSwitch.checked) {
+                    updateElevenLabsUsage();
+                }
             });
 
             // Add event listeners for ignore section checkboxes
@@ -1349,8 +1391,8 @@
 
             // Show error message
             function showError(message) {
-                errorMessage.textContent = message;
-                errorMessage.style.display = "block";
+                errorMessageBox.textContent = message;
+                errorMessageBox.style.display = "block";
             }
 
             // Handle CORS errors with alternative approach
