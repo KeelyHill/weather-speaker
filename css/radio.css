@@ -14,7 +14,7 @@ body {
     color: #999;
 }
 
-#error-message {
+.error-message-box {
     background: #bb5555;
     border-radius: 1em;
     padding: 1em;
@@ -100,7 +100,11 @@ select {
         #44301e 36px,
         #44301e 39px,
         #382613 39px,
-        #382613 46px
+        #382613 46px,
+        #44301e 46px,
+        #44301e 56px,
+        #382613 56px,
+        #382613 60px
     );
     /* background-color: #3a2b1a; */
 }
@@ -254,7 +258,7 @@ input[type="text"] {
     gap: 2rem;
 }
 
-input[type="checkbox"] {
+.radio input[type="checkbox"] {
     display: none;
 }
 
@@ -269,26 +273,55 @@ input:checked + .switch-label .slider::before {
     border-radius: 50% 50% 45% 45%;
     border: 4px solid #222;
     box-shadow: inset 0 0 10px #000;
-    margin: 20px 0px;
+    /* margin: 20px 0px; */
     transition:
         background 0.3s,
         box-shadow 0.3s;
 }
 
 .bulb.on {
+    animation: flicker 10s infinite ease-in-out;
+
+    /* orange */
     background: rgba(249, 199, 27, 1);
     box-shadow:
         0 0 20px rgba(249, 199, 27, 1),
         0 0 60px rgba(249, 199, 27, 1),
         inset 0 0 5px #222;
+
+    /* green */
+    /* background: rgba(50, 180, 2, 1);
+    box-shadow:
+        0 0 20px rgba(50, 180, 2, 1),
+        0 0 60px rgba(50, 180, 2, 1),
+        inset 0 0 5px #222; */
 }
 
 .bulb.error {
+    animation: flicker 10s infinite ease-in-out;
     background: rgba(250, 70, 27, 1);
     box-shadow:
         0 0 20px rgba(250, 70, 27, 1),
         0 0 60px rgba(240, 70, 27, 1),
         inset 0 0 5px #222;
+}
+
+@keyframes flicker {
+    0%,
+    19%,
+    21%,
+    23%,
+    25%,
+    54%,
+    56%,
+    100% {
+        opacity: 1;
+    }
+    20%,
+    24%,
+    55% {
+        opacity: 0.8;
+    }
 }
 
 .label-text {
