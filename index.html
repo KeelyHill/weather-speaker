@@ -877,7 +877,7 @@
                         console.error("Error fetching forecast:", error);
                         loadingIndicator.style.display = "none";
                         tuneInBulb.classList.add("error");
-                        showError("Error fetching forecast discussion.");
+                        showError(error);
                         //  This could be due to CORS restrictions. Please try another office code or visit the Weather Service website directly.
                     });
             }
@@ -923,9 +923,12 @@
                         glob_users_name = data.first_name;
 
                         elevenlabsUsage.textContent = `${percentUsed.toFixed(2)}% used`;
+
                         console.log(
                             `ElevenLabs: ${percentUsed.toFixed(2)}% used`,
                         );
+
+                        fetchWeather();
                     })
                     .catch((error) => {
                         console.error("Error with ElevenLabs API:", error);
@@ -1150,7 +1153,7 @@
                 source.start();
             }
 
-            function playWhiteNoise(duration = 6) {
+            function playWhiteNoise(duration = 10) {
                 const audioCtx = new (window.AudioContext ||
                     window.webkitAudioContext)();
                 const bufferSize = duration * audioCtx.sampleRate;
@@ -1191,9 +1194,10 @@
                 const filter = audioCtx.createBiquadFilter();
                 filter.type = "lowpass";
                 // filter.frequency.setValueAtTime(10000, audioCtx.currentTime); // Cut highs
+                filter.frequency.setValueAtTime(4000, audioCtx.currentTime);
                 filter.frequency.linearRampToValueAtTime(
-                    3000,
-                    audioCtx.currentTime + duration / 4,
+                    1000,
+                    audioCtx.currentTime + duration * 0.6,
                 ); // Cut highs
                 filter.Q.value = 0.7;
 
@@ -1204,15 +1208,15 @@
                 gainNode.gain.setValueAtTime(ZERO_GAIN, now);
                 gainNode.gain.linearRampToValueAtTime(
                     MAX_GAIN,
-                    now + duration / 8,
+                    now + (duration / 10) * 1,
                 );
                 gainNode.gain.linearRampToValueAtTime(
-                    MAX_GAIN / 2,
-                    now + (duration / 8) * 2,
+                    MAX_GAIN / 4,
+                    now + (duration / 10) * 2,
                 );
                 gainNode.gain.linearRampToValueAtTime(
                     MAX_GAIN,
-                    now + (duration / 8) * 3,
+                    now + (duration / 10) * 3,
                 );
                 gainNode.gain.linearRampToValueAtTime(
                     ZERO_GAIN,
@@ -1390,29 +1394,22 @@
              *
              **/
 
-            getApiKeyFromCookies();
-            loadVoiceIdFromCookies();
             loadIgnoreSectionsFromCookies();
 
-            // Update processed text if content is already loaded
-            setTimeout(() => {
-                const rawText = rawForecastContent.textContent;
-                if (rawText) {
-                    forecastContent.textContent = makeTextSpeakable(rawText);
-                }
-            }, 100);
+            getApiKeyFromCookies();
+            loadVoiceIdFromCookies();
 
-            const apiKey = document.getElementById("elevenlabs-api-key").value;
-            if (apiKey) {
-                updateElevenLabsUsage();
-            }
-
-            // get office code from URL if exists
+            // load office code from URL if exists
             const urlParams = new URLSearchParams(window.location.search);
             officeCodeField.value = urlParams.get("office");
 
             if (officeCodeField.value) {
                 fetchWeather();
+            }
+
+            const apiKey = document.getElementById("elevenlabs-api-key").value;
+            if (apiKey) {
+                updateElevenLabsUsage();
             }
         </script>
     </body>
