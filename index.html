@@ -22,6 +22,13 @@
                             <button class="media-btn" id="fetch-button">
                                 Tune in
                             </button>
+
+                            <div
+                                id="bulb-tuned-in"
+                                class="bulb"
+                                style="margin: auto 0"
+                                title="TODO TODO TODO"
+                            ></div>
                         </div>
                     </div>
                     <div class="radio-screen">
@@ -218,6 +225,7 @@
                             id="elevenlabs-voice"
                             placeholder="Enter voice ID (e.g., 21m00Tcm4TlvDq8ikWAM)"
                             value="od84OdVweqzO3t6kKlWT"
+                            oninput="saveVoiceIdToCookies()"
                         />
                         <div id="elevenlabs-usage">xx%</div>
                     </div>
@@ -896,7 +904,6 @@
             function speakWithElevenLabs(text) {
                 const apiKey =
                     document.getElementById("elevenlabs-api-key").value;
-                saveApiKeyToCookies();
 
                 const voiceId =
                     document.getElementById("elevenlabs-voice").value;
@@ -994,11 +1001,14 @@
 
             function saveIgnoreSectionsToCookies() {
                 const ignoreSections = {
-                    shortTerm: document.getElementById('ignore-short-term').checked,
-                    longTerm: document.getElementById('ignore-long-term').checked,
-                    marine: document.getElementById('ignore-marine').checked,
-                    aviation: document.getElementById('ignore-aviation').checked,
-                    mtr: document.getElementById('ignore-mtr').checked
+                    shortTerm:
+                        document.getElementById("ignore-short-term").checked,
+                    longTerm:
+                        document.getElementById("ignore-long-term").checked,
+                    marine: document.getElementById("ignore-marine").checked,
+                    aviation:
+                        document.getElementById("ignore-aviation").checked,
+                    mtr: document.getElementById("ignore-mtr").checked,
                 };
                 document.cookie = `ignoreSections=${encodeURIComponent(JSON.stringify(ignoreSections))}; path=/; max-age=31536000`;
             }
@@ -1009,23 +1019,66 @@
                     const [name, value] = cookie.split("=");
                     if (name === "ignoreSections") {
                         try {
-                            const ignoreSections = JSON.parse(decodeURIComponent(value));
-                            document.getElementById('ignore-short-term').checked = ignoreSections.shortTerm !== undefined ? ignoreSections.shortTerm : true;
-                            document.getElementById('ignore-long-term').checked = ignoreSections.longTerm !== undefined ? ignoreSections.longTerm : false;
-                            document.getElementById('ignore-marine').checked = ignoreSections.marine !== undefined ? ignoreSections.marine : false;
-                            document.getElementById('ignore-aviation').checked = ignoreSections.aviation !== undefined ? ignoreSections.aviation : true;
-                            document.getElementById('ignore-mtr').checked = ignoreSections.mtr !== undefined ? ignoreSections.mtr : true;
+                            const ignoreSections = JSON.parse(
+                                decodeURIComponent(value),
+                            );
+                            document.getElementById(
+                                "ignore-short-term",
+                            ).checked =
+                                ignoreSections.shortTerm !== undefined
+                                    ? ignoreSections.shortTerm
+                                    : true;
+                            document.getElementById(
+                                "ignore-long-term",
+                            ).checked =
+                                ignoreSections.longTerm !== undefined
+                                    ? ignoreSections.longTerm
+                                    : false;
+                            document.getElementById("ignore-marine").checked =
+                                ignoreSections.marine !== undefined
+                                    ? ignoreSections.marine
+                                    : false;
+                            document.getElementById("ignore-aviation").checked =
+                                ignoreSections.aviation !== undefined
+                                    ? ignoreSections.aviation
+                                    : true;
+                            document.getElementById("ignore-mtr").checked =
+                                ignoreSections.mtr !== undefined
+                                    ? ignoreSections.mtr
+                                    : true;
                         } catch (e) {
-                            console.log("Error loading ignore sections from cookies:", e);
+                            console.log(
+                                "Error loading ignore sections from cookies:",
+                                e,
+                            );
                         }
                         break;
                     }
                 }
             }
 
+            function saveVoiceIdToCookies() {
+                const voiceId =
+                    document.getElementById("elevenlabs-voice").value;
+                document.cookie = `elevenlabsVoiceId=${encodeURIComponent(voiceId)}; path=/; max-age=31536000`;
+            }
+
+            function loadVoiceIdFromCookies() {
+                const cookies = document.cookie.split("; ");
+                for (const cookie of cookies) {
+                    const [name, value] = cookie.split("=");
+                    if (name === "elevenlabsVoiceId") {
+                        document.getElementById("elevenlabs-voice").value =
+                            decodeURIComponent(value);
+                        break;
+                    }
+                }
+            }
+
             loadApiKeyFromCookies();
+            loadVoiceIdFromCookies();
             loadIgnoreSectionsFromCookies();
-            
+
             // Update processed text if content is already loaded
             setTimeout(() => {
                 const rawText = rawForecastContent.textContent;
@@ -1033,7 +1086,7 @@
                     forecastContent.textContent = makeTextSpeakable(rawText);
                 }
             }, 100);
-            
+
             const apiKey = document.getElementById("elevenlabs-api-key").value;
             if (apiKey) {
                 updateElevenLabsUsage(apiKey);
