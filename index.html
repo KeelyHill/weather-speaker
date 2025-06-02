@@ -1012,8 +1012,6 @@
                     });
             }
 
-            /* Page load logic */
-
             function saveApiKeyToCookies() {
                 const apiKey =
                     document.getElementById("elevenlabs-api-key").value;
@@ -1110,38 +1108,6 @@
                     }
                 }
             }
-
-            getApiKeyFromCookies();
-            loadVoiceIdFromCookies();
-            loadIgnoreSectionsFromCookies();
-
-            // Update processed text if content is already loaded
-            setTimeout(() => {
-                const rawText = rawForecastContent.textContent;
-                if (rawText) {
-                    forecastContent.textContent = makeTextSpeakable(rawText);
-                }
-            }, 100);
-
-            const apiKey = document.getElementById("elevenlabs-api-key").value;
-            if (apiKey) {
-                updateElevenLabsUsage();
-            }
-
-            // get office code from URL if exists
-            const urlParams = new URLSearchParams(window.location.search);
-            officeCodeField.value = urlParams.get("office");
-
-            if (officeCodeField.value) {
-                fetchWeather();
-            }
-
-            /* Event handeling */
-
-            fetchButton.addEventListener("click", function () {
-                soundEffectButtonClick();
-                fetchWeather();
-            });
 
             function soundEffectButtonClick() {
                 const ctx = new (window.AudioContext ||
@@ -1261,16 +1227,6 @@
                 whiteNoise.stop(now + duration);
             }
 
-            voiceSwitch.addEventListener("change", function () {
-                soundEffectButtonClick();
-
-                // Update UI if we plan to use this.
-
-                if (voiceSwitch.checked) {
-                    updateElevenLabsUsage();
-                }
-            });
-
             // Add event listeners for ignore section checkboxes
             function updateProcessedText() {
                 const rawText = rawForecastContent.textContent;
@@ -1279,6 +1235,28 @@
                 }
                 saveIgnoreSectionsToCookies();
             }
+
+            // Show error message
+            function showError(message) {
+                errorMessageBox.textContent = message;
+                errorMessageBox.style.display = "block";
+            }
+
+            // Handle CORS errors with alternative approach
+            window.addEventListener("error", function (e) {
+                if (
+                    e.message.includes("CORS") ||
+                    e.message.includes("blocked")
+                ) {
+                    showError(
+                        "CORS error detected. Please use a CORS browser extension or try a different approach.",
+                    );
+                }
+            });
+
+            /**
+             * Event handeling
+             **/
 
             document
                 .getElementById("ignore-short-term")
@@ -1295,6 +1273,21 @@
             document
                 .getElementById("ignore-mtr")
                 .addEventListener("change", updateProcessedText);
+
+            fetchButton.addEventListener("click", function () {
+                soundEffectButtonClick();
+                fetchWeather();
+            });
+
+            voiceSwitch.addEventListener("change", function () {
+                soundEffectButtonClick();
+
+                // Update UI if we plan to use this.
+
+                if (voiceSwitch.checked) {
+                    updateElevenLabsUsage();
+                }
+            });
 
             // Speech controls
             playButton.addEventListener("click", async function () {
@@ -1389,23 +1382,38 @@
                 speechSynth.cancel();
             });
 
-            // Show error message
-            function showError(message) {
-                errorMessageBox.textContent = message;
-                errorMessageBox.style.display = "block";
+            /**
+             *
+             *
+             * Begin "main" logic
+             *
+             *
+             **/
+
+            getApiKeyFromCookies();
+            loadVoiceIdFromCookies();
+            loadIgnoreSectionsFromCookies();
+
+            // Update processed text if content is already loaded
+            setTimeout(() => {
+                const rawText = rawForecastContent.textContent;
+                if (rawText) {
+                    forecastContent.textContent = makeTextSpeakable(rawText);
+                }
+            }, 100);
+
+            const apiKey = document.getElementById("elevenlabs-api-key").value;
+            if (apiKey) {
+                updateElevenLabsUsage();
             }
 
-            // Handle CORS errors with alternative approach
-            window.addEventListener("error", function (e) {
-                if (
-                    e.message.includes("CORS") ||
-                    e.message.includes("blocked")
-                ) {
-                    showError(
-                        "CORS error detected. Please use a CORS browser extension or try a different approach.",
-                    );
-                }
-            });
+            // get office code from URL if exists
+            const urlParams = new URLSearchParams(window.location.search);
+            officeCodeField.value = urlParams.get("office");
+
+            if (officeCodeField.value) {
+                fetchWeather();
+            }
         </script>
     </body>
 </html>
