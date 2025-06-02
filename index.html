@@ -228,6 +228,39 @@
 
             <h2>Text Processing</h2>
 
+            <div style="margin-bottom: 20px">
+                <h3>Ignore Sections:</h3>
+                <div
+                    style="
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 15px;
+                        margin: 10px 0;
+                    "
+                >
+                    <label style="display: flex; align-items: center; gap: 5px">
+                        <input type="checkbox" id="ignore-short-term" />
+                        <span>SHORT TERM</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px">
+                        <input type="checkbox" id="ignore-long-term" />
+                        <span>LONG TERM</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px">
+                        <input type="checkbox" id="ignore-marine" />
+                        <span>MARINE</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px">
+                        <input type="checkbox" id="ignore-aviation" checked />
+                        <span>AVIATION</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px">
+                        <input type="checkbox" id="ignore-mtr" checked />
+                        <span>MTR</span>
+                    </label>
+                </div>
+            </div>
+
             <div class="text-section">
                 <div
                     class="raw-forecast-content preformat"
@@ -429,41 +462,157 @@
                 return ordinals[n] || n.toString();
             }
 
-            const dayShortToLongMap = {
-                Sun: "Sunday",
-                Mon: "Monday",
-                Tue: "Tuesday",
-                Wed: "Wednesday",
-                Thu: "Thursday",
-                Fri: "Friday",
-                Sat: "Saturday",
-            };
+            // Unified function to convert any date (Date object or string) to spoken words
+            function dateToWords(dateInput) {
+                const dayShortToLongMap = {
+                    Sun: "Sunday",
+                    Mon: "Monday",
+                    Tue: "Tuesday",
+                    Wed: "Wednesday",
+                    Thu: "Thursday",
+                    Fri: "Friday",
+                    Sat: "Saturday",
+                };
 
-            const monthShortToLongMap = {
-                Jan: "January",
-                Feb: "February",
-                Mar: "March",
-                Apr: "April",
-                May: "May",
-                Jun: "June",
-                Jul: "July",
-                Aug: "August",
-                Sep: "September",
-                Oct: "October",
-                Nov: "November",
-                Dec: "December",
-            };
+                const monthShortToLongMap = {
+                    Jan: "January",
+                    Feb: "February",
+                    Mar: "March",
+                    Apr: "April",
+                    May: "May",
+                    Jun: "June",
+                    Jul: "July",
+                    Aug: "August",
+                    Sep: "September",
+                    Oct: "October",
+                    Nov: "November",
+                    Dec: "December",
+                };
 
-            function convertFullTimeDate(input) {
-                input = input.replace(
-                    /\b(\d{1,2})(\d{2})\s*([AP]M)\b/gi,
-                    "$1:$2 $3",
-                );
-                return input.replace(
-                    /(\d{1,2}):(\d{2})\s*([AP]M)\s+([A-Z]+)\s+(\w{3})\s+(\w{3})\s+(\d{1,2})\s+\d{4}/,
-                    (_, h, m, ampm, tz, dow, mon, day) =>
-                        `${numberToWords(+h)} ${numberToWords(+m)} ${ampm}, ${dayShortToLongMap[dow]} ${monthShortToLongMap[mon]} ${numberToOrdinal(+day)}`,
-                );
+                let date;
+
+                if (dateInput instanceof Date) {
+                    date = dateInput;
+                } else if (typeof dateInput === "string") {
+                    // Parse strings like "1124 AM PDT Sun Jun 1 2025"
+                    // First normalize the time format
+                    let normalizedInput = dateInput.replace(
+                        /\b(\d{1,2})(\d{2})\s*([AP]M)\b/gi,
+                        "$1:$2 $3",
+                    );
+
+                    // Try to parse the normalized string
+                    date = new Date(normalizedInput);
+
+                    // If that fails, try a more manual approach
+                    if (isNaN(date.getTime())) {
+                        const match = normalizedInput.match(
+                            /(\d{1,2}):(\d{2})\s*([AP]M)\s+([A-Z]+)\s+(\w{3})\s+(\w{3})\s+(\d{1,2})\s+(\d{4})/,
+                        );
+                        if (match) {
+                            const [
+                                ,
+                                hours,
+                                minutes,
+                                ampm,
+                                tz,
+                                dow,
+                                monthShort,
+                                day,
+                                year,
+                            ] = match;
+                            const monthNum =
+                                Object.keys(monthShortToLongMap).indexOf(
+                                    monthShort,
+                                );
+                            if (monthNum !== -1) {
+                                date = new Date(
+                                    year,
+                                    monthNum,
+                                    day,
+                                    ampm === "PM" && hours !== "12"
+                                        ? parseInt(hours) + 12
+                                        : ampm === "AM" && hours === "12"
+                                          ? 0
+                                          : parseInt(hours),
+                                    parseInt(minutes),
+                                );
+                            }
+                        }
+                    }
+                } else {
+                    // Default to current date if input is invalid
+                    date = new Date();
+                }
+
+                // If we still don't have a valid date, use current date
+                if (!date || isNaN(date.getTime())) {
+                    date = new Date();
+                }
+
+                // Convert date to spoken words
+                const hours = date.getHours();
+                const minutes = date.getMinutes();
+                const period = hours >= 12 ? "PM" : "AM";
+                const hour12 = hours % 12 || 12;
+
+                const dayNames = [
+                    "Sunday",
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                ];
+                const monthNames = [
+                    "January",
+                    "February",
+                    "March",
+                    "April",
+                    "May",
+                    "June",
+                    "July",
+                    "August",
+                    "September",
+                    "October",
+                    "November",
+                    "December",
+                ];
+
+                const dayName = dayNames[date.getDay()];
+                const monthName = monthNames[date.getMonth()];
+                const dayOfMonth = date.getDate();
+
+                // Format time in words
+                const hourInWords = numberToWords(hour12);
+                let minuteInWords;
+                if (minutes === 0) {
+                    minuteInWords = "o'clock";
+                } else if (minutes < 10) {
+                    minuteInWords = `o' ${numberToWords(minutes)}`;
+                } else {
+                    minuteInWords = numberToWords(minutes);
+                }
+
+                const dayInWords = numberToOrdinal(dayOfMonth);
+
+                return `${hourInWords} ${minuteInWords} ${period}, ${dayName} ${monthName} ${dayInWords}`;
+            }
+
+            // Function to get appropriate greeting based on time
+            function getTimeBasedGreeting(date = new Date()) {
+                const hours = date.getHours();
+
+                if (hours > 3 && hours < 11) {
+                    return "Good morning";
+                } else if (hours > 12 && hours < 19) {
+                    return "Good afternoon";
+                } else if (hours > 19) {
+                    return "Good evening";
+                } else {
+                    return "Hello";
+                }
             }
 
             // Function to remove US timezone abbreviations
@@ -519,62 +668,7 @@
                 // manually do the summary since it's format is a bit different
 
                 const now = new Date();
-
-                // Append current date and time in plain English
-                const hours = now.getHours();
-                const minutes = now.getMinutes();
-                const period = hours >= 12 ? "PM" : "AM";
-                const hour12 = hours % 12 || 12; // Convert to 12-hour format
-
-                // Get day of week and month names
-                const dayNames = [
-                    "Sunday",
-                    "Monday",
-                    "Tuesday",
-                    "Wednesday",
-                    "Thursday",
-                    "Friday",
-                    "Saturday",
-                ];
-                const monthNames = [
-                    "January",
-                    "February",
-                    "March",
-                    "April",
-                    "May",
-                    "June",
-                    "July",
-                    "August",
-                    "September",
-                    "October",
-                    "November",
-                    "December",
-                ];
-
-                const dayName = dayNames[now.getDay()];
-                const monthName = monthNames[now.getMonth()];
-                const dayOfMonth = now.getDate();
-
-                // Format time in words
-                const hourInWords = numberToWords(hour12);
-                var minuteInWords = numberToWords(minutes);
-                if (minutes === 0) {
-                    minuteInWords = "o'clock";
-                } else if (minutes < 10) {
-                    minuteInWords = `o' ${numberToWords(minutes)}`;
-                }
-
-                const dayInWords = numberToOrdinal(dayOfMonth);
-
-                var greetingWords = "Hello";
-
-                if (hours > 3 && hours < 11) {
-                    greetingWords = "Good morning";
-                } else if (hours > 12 && hours < 19) {
-                    greetingWords = "Good afternoon";
-                } else if (hours > 19) {
-                    greetingWords = "Good evening";
-                }
+                const greetingWords = getTimeBasedGreeting(now);
 
                 if (glob_users_name) {
                     newText += `${greetingWords}, ${glob_users_name}! `;
@@ -582,7 +676,7 @@
                     newText += `${greetingWords}! `;
                 }
 
-                newText += `It is ${hourInWords} ${minuteInWords} ${period} on ${dayName}, ${monthName} ${dayInWords}. `;
+                newText += `It is ${dateToWords(now)}. `;
 
                 // lower case makes TTS read it better
                 newText += summarySectionDetailSplit[0].replace(
@@ -595,8 +689,7 @@
                 ).replace("National Weather Service", "");
 
                 newText += "office, issued at ";
-                newText +=
-                    convertFullTimeDate(summarySectionDetailSplit[2]) + ".\n\n";
+                newText += dateToWords(summarySectionDetailSplit[2]) + ".\n\n";
 
                 // add the rest of it
                 newText += summarySectionSplit[4];
@@ -613,9 +706,28 @@
 
                     const allowSection = true; //    /^\W*\.LONG TERM\b/i.test(sectionText);
 
-                    const ignoreSection = false;
-                    // /^\W*\.MTR\b/i.test(sectionText) ||
-                    // /^\W*\.AVIATION\b/i.test(sectionText);
+                    const ignoreShortTerm =
+                        document.getElementById("ignore-short-term").checked &&
+                        /^\W*\.SHORT TERM\b/i.test(sectionText);
+                    const ignoreLongTerm =
+                        document.getElementById("ignore-long-term").checked &&
+                        /^\W*\.LONG TERM\b/i.test(sectionText);
+                    const ignoreMarine =
+                        document.getElementById("ignore-marine").checked &&
+                        /^\W*\.MARINE\b/i.test(sectionText);
+                    const ignoreAviation =
+                        document.getElementById("ignore-aviation").checked &&
+                        /^\W*\.AVIATION\b/i.test(sectionText);
+                    const ignoreMtr =
+                        document.getElementById("ignore-mtr").checked &&
+                        /^\W*\.MTR\b/i.test(sectionText);
+
+                    const ignoreSection =
+                        ignoreShortTerm ||
+                        ignoreLongTerm ||
+                        ignoreMarine ||
+                        ignoreAviation ||
+                        ignoreMtr;
 
                     if (allowSection && !ignoreSection) {
                         newText += sectionText;
@@ -880,7 +992,48 @@
                 }
             }
 
+            function saveIgnoreSectionsToCookies() {
+                const ignoreSections = {
+                    shortTerm: document.getElementById('ignore-short-term').checked,
+                    longTerm: document.getElementById('ignore-long-term').checked,
+                    marine: document.getElementById('ignore-marine').checked,
+                    aviation: document.getElementById('ignore-aviation').checked,
+                    mtr: document.getElementById('ignore-mtr').checked
+                };
+                document.cookie = `ignoreSections=${encodeURIComponent(JSON.stringify(ignoreSections))}; path=/; max-age=31536000`;
+            }
+
+            function loadIgnoreSectionsFromCookies() {
+                const cookies = document.cookie.split("; ");
+                for (const cookie of cookies) {
+                    const [name, value] = cookie.split("=");
+                    if (name === "ignoreSections") {
+                        try {
+                            const ignoreSections = JSON.parse(decodeURIComponent(value));
+                            document.getElementById('ignore-short-term').checked = ignoreSections.shortTerm !== undefined ? ignoreSections.shortTerm : true;
+                            document.getElementById('ignore-long-term').checked = ignoreSections.longTerm !== undefined ? ignoreSections.longTerm : false;
+                            document.getElementById('ignore-marine').checked = ignoreSections.marine !== undefined ? ignoreSections.marine : false;
+                            document.getElementById('ignore-aviation').checked = ignoreSections.aviation !== undefined ? ignoreSections.aviation : true;
+                            document.getElementById('ignore-mtr').checked = ignoreSections.mtr !== undefined ? ignoreSections.mtr : true;
+                        } catch (e) {
+                            console.log("Error loading ignore sections from cookies:", e);
+                        }
+                        break;
+                    }
+                }
+            }
+
             loadApiKeyFromCookies();
+            loadIgnoreSectionsFromCookies();
+            
+            // Update processed text if content is already loaded
+            setTimeout(() => {
+                const rawText = rawForecastContent.textContent;
+                if (rawText) {
+                    forecastContent.textContent = makeTextSpeakable(rawText);
+                }
+            }, 100);
+            
             const apiKey = document.getElementById("elevenlabs-api-key").value;
             if (apiKey) {
                 updateElevenLabsUsage(apiKey);
@@ -1022,6 +1175,31 @@
             voiceSwitch.addEventListener("change", function () {
                 soundEffectButtonClick();
             });
+
+            // Add event listeners for ignore section checkboxes
+            function updateProcessedText() {
+                const rawText = rawForecastContent.textContent;
+                if (rawText) {
+                    forecastContent.textContent = makeTextSpeakable(rawText);
+                }
+                saveIgnoreSectionsToCookies();
+            }
+
+            document
+                .getElementById("ignore-short-term")
+                .addEventListener("change", updateProcessedText);
+            document
+                .getElementById("ignore-long-term")
+                .addEventListener("change", updateProcessedText);
+            document
+                .getElementById("ignore-marine")
+                .addEventListener("change", updateProcessedText);
+            document
+                .getElementById("ignore-aviation")
+                .addEventListener("change", updateProcessedText);
+            document
+                .getElementById("ignore-mtr")
+                .addEventListener("change", updateProcessedText);
 
             // Speech controls
             playButton.addEventListener("click", async function () {
