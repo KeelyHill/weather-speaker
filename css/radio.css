@@ -35,7 +35,7 @@ select {
 }
 
 .radio-case {
-    width: 700px;
+    width: 750px;
 
     margin: 50px auto auto auto;
 
@@ -254,7 +254,7 @@ input[type="text"] {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 2rem 1rem;
+    padding: 2rem 0rem;
     gap: 2rem;
 }
 
@@ -404,8 +404,8 @@ input:checked + .switch-label .slider::before {
 
 .media-btn:hover {
     background: #444;
-    transform: translateY(3px);
-    box-shadow: 0 7px 0px black;
+    transform: translateY(2px);
+    box-shadow: 0 8px 0px black;
 }
 
 .media-btn:active {
