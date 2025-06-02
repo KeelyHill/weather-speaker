@@ -27,7 +27,7 @@
                                 id="tune-in-bulb"
                                 class="bulb"
                                 style="margin: auto 0"
-                                title="Tune in status"
+                                title="Tune in (forcast text) status"
                             ></div>
                         </div>
                     </div>
@@ -38,6 +38,7 @@
                             <a
                                 href="https://upload.wikimedia.org/wikipedia/commons/0/05/NWS_Weather_Forecast_Offices.svg"
                                 target="_blank"
+                                style="cursor: help"
                             >
                                 Office:
                             </a>
@@ -331,7 +332,8 @@
 
             let speechSynth = window.speechSynthesis;
             let speechUtterance = null;
-            let voices = [];
+
+            var globalAudio = null;
 
             /**
             String and message utils
@@ -931,13 +933,57 @@
                         fetchWeather();
                     })
                     .catch((error) => {
+                        elevenLabsBulb.classList.add("error");
                         console.error("Error with ElevenLabs API:", error);
-                        alert(`Error: ${error.message}`);
+                        showError(`Error: ${error.message}`);
                     });
+            }
+
+            function playURLAudio(audioUrl) {
+                if (globalAudio) {
+                    if (!globalAudio.paused && !globalAudio.ended) {
+                        // Already playing — do nothing
+                        return;
+                    }
+
+                    if (globalAudio.ended) {
+                        globalAudio.currentTime = 0;
+                    }
+
+                    globalAudio.play();
+
+                    return;
+                }
+
+                globalAudio = new Audio(audioUrl);
+
+                globalAudio.addEventListener("timeupdate", () => {
+                    if (globalAudio.duration > 0) {
+                        const percent =
+                            (globalAudio.currentTime / globalAudio.duration) *
+                            100;
+                        console.log(`Played: ${percent.toFixed(2)}%`);
+
+                        needle.style.left = percent + "%";
+                    }
+                });
+
+                globalAudio.play();
             }
 
             // Function to use ElevenLabs for text-to-speech
             function speakWithElevenLabs(text) {
+                // dummy audio for debug
+                // const audioUrl =
+                //     "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3";
+                // playURLAudio(audioUrl);
+                //
+
+                if (globalAudio) {
+                    showError("Already have audio.");
+                    return;
+                }
+
                 const apiKey =
                     document.getElementById("elevenlabs-api-key").value;
 
@@ -1001,9 +1047,9 @@
                     .then((blob) => {
                         // Create audio element and play audio
                         const audioUrl = URL.createObjectURL(blob);
-                        const audio = new Audio(audioUrl);
-                        console.log(audioUrl);
-                        audio.play();
+                        console.log(`ElevenLabs URL: ${audioUrl}`);
+
+                        playURLAudio(audioUrl);
 
                         // Hide loading indicator
                         loadingIndicator.style.display = "none";
@@ -1153,7 +1199,7 @@
                 source.start();
             }
 
-            function playWhiteNoise(duration = 10) {
+            function playWhiteNoise(duration) {
                 const audioCtx = new (window.AudioContext ||
                     window.webkitAudioContext)();
                 const bufferSize = duration * audioCtx.sampleRate;
@@ -1300,7 +1346,9 @@
 
                 soundEffectButtonClick();
 
-                playWhiteNoise(5);
+                /*
+
+                playWhiteNoise(7);
 
                 for (let i = 0; i < 4; i++) {
                     setTimeout(() => {
@@ -1316,6 +1364,8 @@
 
                 await new Promise((resolve) => setTimeout(resolve, 3000));
                 needle.style.left = "0%";
+
+                 */
 
                 if (useNaturalVoice) {
                     // speakWithElevenLabs(
@@ -1359,7 +1409,7 @@
                                     (event.charIndex /
                                         speechUtterance.text.length) *
                                     100;
-                                console.log(`Progress: ${percent.toFixed(2)}%`);
+                                // console.log(`Progress: ${percent.toFixed(2)}%`);
                                 needle.style.left = percent + "%";
                             }
                         };
@@ -1375,15 +1425,27 @@
 
             pauseButton.addEventListener("click", function () {
                 soundEffectButtonClick();
+
                 if (speechSynth.speaking) {
                     speechSynth.pause();
+                }
+
+                if (globalAudio && !globalAudio.paused) {
+                    globalAudio.pause();
                 }
             });
 
             stopButton.addEventListener("click", function () {
                 soundEffectButtonClick();
+
                 voiceSwitch.disabled = false;
+
                 speechSynth.cancel();
+
+                if (globalAudio) {
+                    globalAudio.pause();
+                    globalAudio.currentTime = 0;
+                }
             });
 
             /**
