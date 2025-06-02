@@ -972,15 +972,25 @@
             }
 
             // Function to use ElevenLabs for text-to-speech
-            function speakWithElevenLabs(text) {
+            async function speakWithElevenLabs(text) {
                 // dummy audio for debug
                 // const audioUrl =
                 //     "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3";
-                // playURLAudio(audioUrl);
+                //
                 //
 
                 if (globalAudio) {
+                    playURLAudio(null);
                     showError("Already have audio.");
+                    return;
+                }
+
+                // Check if we have saved audio for this text
+                const savedBlob = await loadAudioFromStorageCache(text);
+                if (savedBlob) {
+                    const audioUrl = URL.createObjectURL(savedBlob);
+                    console.log("Using saved audio:", audioUrl);
+                    playURLAudio(audioUrl);
                     return;
                 }
 
@@ -1045,8 +1055,13 @@
                         return response.blob();
                     })
                     .then((blob) => {
+                        // Save audio to storage for future use
+                        saveAudioToStorageCache(text, blob);
+
                         // Create audio element and play audio
                         const audioUrl = URL.createObjectURL(blob);
+
+                        console.log(`ElevenLabs Blob: ${blob}`);
                         console.log(`ElevenLabs URL: ${audioUrl}`);
 
                         playURLAudio(audioUrl);
@@ -1292,6 +1307,103 @@
                 errorMessageBox.style.display = "block";
             }
 
+            // Audio storage functions using IndexedDB
+            function openAudioCacheDB() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(
+                        "WeatherTalkerAudioCache",
+                        1,
+                    );
+
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => resolve(request.result);
+
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains("audioFiles")) {
+                            db.createObjectStore("audioFiles", {
+                                keyPath: "textHash",
+                            });
+                        }
+                    };
+                });
+            }
+
+            async function generateTextHash(text) {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(text);
+                const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray
+                    .map((b) => b.toString(16).padStart(2, "0"))
+                    .join("");
+                return hashHex;
+            }
+
+            /** Using `text` as the look up "key" for the cache. */
+            async function saveAudioToStorageCache(text, blob) {
+                try {
+                    // Generate hash first
+                    const textHash = await generateTextHash(text);
+                    console.log(`textHash=${textHash}`);
+
+                    // Then start transaction
+                    const db = await openAudioCacheDB();
+                    const transaction = db.transaction(
+                        ["audioFiles"],
+                        "readwrite",
+                    );
+                    const store = transaction.objectStore("audioFiles");
+
+                    const audioData = {
+                        textHash: textHash,
+                        blob: blob,
+                        timestamp: Date.now(),
+                    };
+
+                    await store.put(audioData);
+                    console.log("Audio saved to storage with hash:", textHash);
+                } catch (error) {
+                    console.error("Failed to save audio:", error);
+                }
+            }
+
+            async function loadAudioFromStorageCache(text) {
+                try {
+                    // Generate hash first
+                    const textHash = await generateTextHash(text);
+                    console.log(`textHash=${textHash}`);
+
+                    // Then start transaction
+                    const db = await openAudioCacheDB();
+                    const transaction = db.transaction(
+                        ["audioFiles"],
+                        "readonly",
+                    );
+                    const store = transaction.objectStore("audioFiles");
+
+                    const request = store.get(textHash);
+
+                    return new Promise((resolve, reject) => {
+                        request.onerror = () => reject(request.error);
+                        request.onsuccess = () => {
+                            if (request.result) {
+                                console.log(
+                                    "Audio loaded from storage with hash:",
+                                    textHash,
+                                );
+                                resolve(request.result.blob);
+                            } else {
+                                resolve(null);
+                            }
+                        };
+                    });
+                } catch (error) {
+                    console.error("Failed to load audio:", error);
+                    return null;
+                }
+            }
+
             // Handle CORS errors with alternative approach
             window.addEventListener("error", function (e) {
                 if (
@@ -1368,10 +1480,11 @@
                  */
 
                 if (useNaturalVoice) {
-                    // speakWithElevenLabs(
-                    //     "Example. Unsettled weather returns today and continues into early next week.",
-                    // );
-                    // return;
+                    speakWithElevenLabs(
+                        "Example. Unsettled weather returns today and continues into early next week.",
+                    );
+                    return;
+
                     if (forecastContent.textContent) {
                         speakWithElevenLabs(forecastContent.textContent);
                     } else {
