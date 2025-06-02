@@ -161,6 +161,10 @@ select {
     cursor: grab;
 }
 
+.radio-middle {
+    display: flex;
+}
+
 .radio-screen {
     font-family: "Doto", "Kode Mono", monospace;
     font-size: 1.6rem;
@@ -254,6 +258,39 @@ input[type="checkbox"] {
     display: none;
 }
 
+input:checked + .switch-label .slider::before {
+    transform: translateX(32px);
+}
+
+.bulb {
+    width: 30px;
+    height: 30px;
+    background: #333;
+    border-radius: 50% 50% 45% 45%;
+    border: 4px solid #222;
+    box-shadow: inset 0 0 10px #000;
+    margin: 20px 0px;
+    transition:
+        background 0.3s,
+        box-shadow 0.3s;
+}
+
+.bulb.on {
+    background: rgba(249, 199, 27, 1);
+    box-shadow:
+        0 0 20px rgba(249, 199, 27, 1),
+        0 0 60px rgba(249, 199, 27, 1),
+        inset 0 0 5px #222;
+}
+
+.bulb.error {
+    background: rgba(250, 70, 27, 1);
+    box-shadow:
+        0 0 20px rgba(250, 70, 27, 1),
+        0 0 60px rgba(240, 70, 27, 1),
+        inset 0 0 5px #222;
+}
+
 .label-text {
     color: #ccc;
     text-align: center;
@@ -307,10 +344,6 @@ input[type="checkbox"] {
     transition: 0.3s;
     /* transform: translateX(-8px); */
     box-shadow: 0 0 15px #000;
-}
-
-input:checked + .switch-label .slider::before {
-    transform: translateX(32px);
 }
 
 .media-buttons {
@@ -370,4 +403,6 @@ input:checked + .switch-label .slider::before {
 
     font-family: monospace;
     font-size: 1em;
+
+    background: #444;
 }

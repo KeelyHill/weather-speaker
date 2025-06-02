@@ -24,7 +24,6 @@
                             </button>
                         </div>
                     </div>
-
                     <div class="radio-screen">
                         <div class="needle" id="needle"></div>
 
@@ -104,16 +103,33 @@
                     </div> -->
                 </div>
 
-                <div class="radio-speaker">
-                    <div
-                        style="
-                            font-family: Monoton, sans-serif;
-                            font-size: 0.8rem;
-                            color: #ccc;
-                            text-shadow: 0 4px 2px black;
-                        "
-                    >
-                        = = =
+                <div class="radio-middle">
+                    <!-- Extra div here to have a vertical stack next to speaker -->
+                    <div style="margin: 20px 0px">
+                        <div
+                            id="eleven-labs-status-bulb"
+                            class="bulb"
+                            title="Connection to ElevenLabs"
+                        ></div>
+
+                        <div
+                            id="bulb-todo"
+                            class="bulb"
+                            title="TODO TODO TODO"
+                        ></div>
+                    </div>
+
+                    <div class="radio-speaker">
+                        <div
+                            style="
+                                font-family: Monoton, sans-serif;
+                                font-size: 0.8rem;
+                                color: #ccc;
+                                text-shadow: 0 4px 2px black;
+                            "
+                        >
+                            = = =
+                        </div>
                     </div>
                 </div>
 
@@ -240,6 +256,35 @@
         </div>
 
         <script defer>
+            var glob_users_name = "";
+            const officeCodeField = document.getElementById("office-code");
+
+            const fetchButton = document.getElementById("fetch-button");
+            const playButton = document.getElementById("play-button");
+            const pauseButton = document.getElementById("pause-button");
+            const stopButton = document.getElementById("stop-button");
+
+            const needle = document.getElementById("needle");
+
+            const elevenLabsBulb = document.getElementById(
+                "eleven-labs-status-bulb",
+            );
+
+            const voiceSwitch = document.getElementById("voice-switch");
+
+            const elevenlabsUsage = document.getElementById("elevenlabs-usage");
+            const voiceSelect = document.getElementById("voice-select");
+            const forecastContent = document.getElementById("forecast-content");
+            const rawForecastContent = document.getElementById(
+                "raw-forecast-content",
+            );
+            const loadingIndicator = document.getElementById("loading");
+            const errorMessage = document.getElementById("error-message");
+
+            let speechSynth = window.speechSynthesis;
+            let speechUtterance = null;
+            let voices = [];
+
             /**
             String and message utils
             **/
@@ -711,10 +756,13 @@
                                 `ElevenLabs API error: ${response.status}`,
                             );
                             console.log(response);
+                            elevenLabsBulb.classList.add("error");
                         }
                         return response.json();
                     })
                     .then((data) => {
+                        elevenLabsBulb.classList.add("on");
+
                         const charUsed = data.subscription.character_count;
                         const charLimit = data.subscription.character_limit;
                         const percentUsed = (charUsed / charLimit) * 100;
@@ -811,35 +859,6 @@
                         loadingIndicator.style.display = "none";
                     });
             }
-
-            /**
-                          UI/UX Control
-                        **/
-
-            var glob_users_name = "";
-            const officeCodeField = document.getElementById("office-code");
-
-            const fetchButton = document.getElementById("fetch-button");
-            const playButton = document.getElementById("play-button");
-            const pauseButton = document.getElementById("pause-button");
-            const stopButton = document.getElementById("stop-button");
-
-            const needle = document.getElementById("needle");
-
-            const voiceSwitch = document.getElementById("voice-switch");
-
-            const elevenlabsUsage = document.getElementById("elevenlabs-usage");
-            const voiceSelect = document.getElementById("voice-select");
-            const forecastContent = document.getElementById("forecast-content");
-            const rawForecastContent = document.getElementById(
-                "raw-forecast-content",
-            );
-            const loadingIndicator = document.getElementById("loading");
-            const errorMessage = document.getElementById("error-message");
-
-            let speechSynth = window.speechSynthesis;
-            let speechUtterance = null;
-            let voices = [];
 
             /* Page load logic */
 
