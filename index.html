@@ -664,13 +664,6 @@
 
             // Function to clean up the text
             function makeTextSpeakable(text) {
-                // clean up ranges
-                text = text.replace(
-                    /(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)/g,
-                    "$1 to $2",
-                );
-                text = text.replace(/(\d+)\s*"/g, "$1 inches");
-
                 var newText = "";
 
                 // manually do the summary since it's format is a bit different
@@ -759,6 +752,7 @@
                 }
 
                 newText = newText
+
                     // Remove period when it's a newline followed by a period
                     .replace(/\n\./g, "\n")
 
@@ -767,6 +761,12 @@
                     .replace(/^\.{3}New.*\n/gm, "")
                     .replace(/^Key Messages\n\n/gm, "")
 
+                    // clean up ranges (5-6 becomes 5 to 6)
+                    .replace(/(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)/g, "$1 to $2")
+
+                    // spell out inches
+                    .replace(/(\d+)\s*"/g, "$1 inches")
+
                     // NWS does backtick for quote for some reason, fix that
                     .replace(/`/g, "'")
 
@@ -774,9 +774,10 @@
                     // Keeps \n if: (1) It's part of "\n\n" or (2) The next line starts with "-"
                     .replace(/(?<!\n)\n(?!\n|-)/g, " ")
                     // remove double spaces betwen words
-                    .replace(/ {2,}/g, " ");
+                    .replace(/ {2,}/g, " ")
 
-                newText = newText.replace(/^-/gm, "- ");
+                    // add a space after the dash bullet
+                    .replace(/^-/gm, "- ");
 
                 // Misc other manual replacements for better speech
                 const replacements = {
