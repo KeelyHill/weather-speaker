@@ -265,8 +265,8 @@
                         <span>AVIATION</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 5px">
-                        <input type="checkbox" id="ignore-mtr" checked />
-                        <span>MTR</span>
+                        <input type="checkbox" id="ignore-watches" checked />
+                        <span>WATCHES/WARNINGS/ADVISORIES</span>
                     </label>
                 </div>
             </div>
@@ -671,17 +671,9 @@
                 );
                 text = text.replace(/(\d+)\s*"/g, "$1 inches");
 
-                // split into sections (by &&)
-
-                var sections = text.split("\n&&\n");
-                const summarySectionSplit = sections[0].split("\n\n");
-                const summarySectionDetailSplit =
-                    summarySectionSplit[1].split("\n");
-
                 var newText = "";
 
                 // manually do the summary since it's format is a bit different
-
                 const now = new Date();
                 const greetingWords = getTimeBasedGreeting(now);
 
@@ -693,26 +685,39 @@
 
                 newText += `It is ${dateToWords(now)}. `;
 
+                ///////////////////////
+
+                // split into sections (by &&)
+
+                const mainAndFooter = text.split("\n$$\n");
+                var sections = mainAndFooter[0].split("\n&&\n");
+
+                const summarySectionSplit = sections[0].split("\n\n");
+                console.log(summarySectionSplit);
+
+                const summarySectionProductAndLocationAndTimeSplit =
+                    summarySectionSplit[1].split("\n");
+
                 // lower case makes TTS read it better
-                newText += summarySectionDetailSplit[0].replace(
-                    "Area Forecast Discussion",
-                    "Here's the area forecast discussion from the",
-                );
+                newText +=
+                    summarySectionProductAndLocationAndTimeSplit[0].replace(
+                        "Area Forecast Discussion",
+                        "Here's the area forecast discussion from the",
+                    );
 
                 newText += stateAbbrToFullName(
-                    summarySectionDetailSplit[1],
+                    summarySectionProductAndLocationAndTimeSplit[1],
                 ).replace("National Weather Service", "");
 
                 newText += "office, issued at ";
-                newText += dateToWords(summarySectionDetailSplit[2]) + ".\n\n";
+                newText +=
+                    dateToWords(
+                        summarySectionProductAndLocationAndTimeSplit[2],
+                    ) + ".\n\n";
 
-                // add the rest of it
-                newText += summarySectionSplit[4];
-
-                // remove top and summary section from the rest
-                sections.splice(0, 1);
-                // remove AFD footer
-                sections.pop();
+                // remove the meta data sections now that I got the time stuff
+                // real content starts at first ".\n"
+                sections[0] = sections[0].replace(/^.*?\.\n/s, ".\n");
 
                 // finaly put all the sections back,
                 // select which ones
@@ -723,26 +728,30 @@
 
                     const ignoreShortTerm =
                         document.getElementById("ignore-short-term").checked &&
-                        /^\W*\.SHORT TERM\b/i.test(sectionText);
+                        /\n\W*\.SHORT TERM\b/i.test(sectionText);
                     const ignoreLongTerm =
                         document.getElementById("ignore-long-term").checked &&
-                        /^\W*\.LONG TERM\b/i.test(sectionText);
+                        /\n\W*\.LONG TERM\b/i.test(sectionText);
                     const ignoreMarine =
                         document.getElementById("ignore-marine").checked &&
-                        /^\W*\.MARINE\b/i.test(sectionText);
+                        /\n\W*\.MARINE\b/i.test(sectionText);
                     const ignoreAviation =
                         document.getElementById("ignore-aviation").checked &&
-                        /^\W*\.AVIATION\b/i.test(sectionText);
-                    const ignoreMtr =
-                        document.getElementById("ignore-mtr").checked &&
-                        /^\W*\.MTR\b/i.test(sectionText);
+                        /\n\W*\.AVIATION\b/i.test(sectionText);
+
+                    // NOTE: this one's regex diverges from others
+                    const ignoreWatches =
+                        document.getElementById("ignore-watches").checked &&
+                        /\n\.(.*?)WATCHES(.*?)\.\.\./i.test(sectionText);
+
+                    console.log("iW: ", ignoreWatches);
 
                     const ignoreSection =
                         ignoreShortTerm ||
                         ignoreLongTerm ||
                         ignoreMarine ||
                         ignoreAviation ||
-                        ignoreMtr;
+                        ignoreWatches;
 
                     if (allowSection && !ignoreSection) {
                         newText += sectionText;
@@ -758,20 +767,30 @@
                     .replace(/^\.{3}New.*\n/gm, "")
                     .replace(/^Key Messages\n\n/gm, "")
 
-                    // NWS does backtick for some reason, fix that
+                    // NWS does backtick for quote for some reason, fix that
                     .replace(/`/g, "'")
+
+                    // newline (NWS 'manual' wrapping) cleanup
                     // Keeps \n if: (1) It's part of "\n\n" or (2) The next line starts with "-"
-                    .replace(/(?<!\n)\n(?!\n|-)/g, " ");
+                    .replace(/(?<!\n)\n(?!\n|-)/g, " ")
+                    // remove double spaces betwen words
+                    .replace(/ {2,}/g, " ");
 
                 newText = newText.replace(/^-/gm, "- ");
 
                 // Misc other manual replacements for better speech
                 const replacements = {
+                    "\n\nSYNOPSIS...\n": "",
+                    "\nUPDATE...\n": "",
                     Pac: "Pacific",
                     PacificNW: "the pacific north west",
                     NWS: "National Weather Service",
                     PoP: "Probability of Precipitation",
                     "%": " percent",
+                    temps: "temperatures",
+                    "t-storms": "thunderstorms",
+                    Rh: "relative humidity",
+                    NorCal: "Northern California",
                     // "0\\.25": "a quarter",
                     // "0\\.5": "a half",
                 };
@@ -813,15 +832,11 @@
                 errorMessageBox.style.display = "none";
 
                 // Construct URL
-                const url = `https://forecast.weather.gov/product.php?site=NWS&product=AFD&format=txt&issuedby=${officeCodeField.value}`;
+                const url = `https://api.weather.gov/products/types/AFD/locations/${officeCodeField.value}/latest`;
 
-                console.log("NWS URL:", url);
+                console.log("NWS API URL:", url);
 
-                // Use CORS proxy to avoid CORS issues
-                // const proxyUrl = `https://cors-anywhere.herokuapp.com/${url}`;
-                proxyUrl = url;
-
-                fetch(proxyUrl)
+                fetch(url)
                     .then((response) => {
                         if (!response.ok) {
                             tuneInBulb.classList.add("error");
@@ -829,23 +844,10 @@
                         }
                         return response.text();
                     })
-                    .then((html) => {
-                        // Extract the forecast discussion text from the HTML
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, "text/html");
+                    .then((json) => {
+                        resp_obj = JSON.parse(json);
 
-                        // Look for pre tag or text content in the page
-                        let rawText = "";
-                        const preElement = doc.querySelector("pre");
-
-                        if (preElement) {
-                            rawText = preElement.textContent;
-                        } else {
-                            // Fallback to searching for the content in other ways
-                            const mainContent =
-                                doc.querySelector("main") || doc.body;
-                            rawText = mainContent.textContent;
-                        }
+                        rawText = resp_obj.productText;
 
                         if (rawText.trim() === "") {
                             tuneInBulb.classList.add("error");
@@ -979,7 +981,7 @@
 
                 if (globalAudio) {
                     playURLAudio(null);
-                    showError("Already have audio.");
+                    // showError("Already have audio.");
                     return;
                 }
 
@@ -1103,7 +1105,7 @@
                     marine: document.getElementById("ignore-marine").checked,
                     aviation:
                         document.getElementById("ignore-aviation").checked,
-                    mtr: document.getElementById("ignore-mtr").checked,
+                    watches: document.getElementById("ignore-watches").checked,
                 };
                 document.cookie = `ignoreSections=${encodeURIComponent(JSON.stringify(ignoreSections))}; path=/; max-age=31536000`;
             }
@@ -1137,9 +1139,9 @@
                                 ignoreSections.aviation !== undefined
                                     ? ignoreSections.aviation
                                     : true;
-                            document.getElementById("ignore-mtr").checked =
-                                ignoreSections.mtr !== undefined
-                                    ? ignoreSections.mtr
+                            document.getElementById("ignore-watches").checked =
+                                ignoreSections.watches !== undefined
+                                    ? ignoreSections.watches
                                     : true;
                         } catch (e) {
                             console.log(
@@ -1431,7 +1433,7 @@
                 .getElementById("ignore-aviation")
                 .addEventListener("change", updateProcessedText);
             document
-                .getElementById("ignore-mtr")
+                .getElementById("ignore-watches")
                 .addEventListener("change", updateProcessedText);
 
             fetchButton.addEventListener("click", function () {
@@ -1456,9 +1458,7 @@
 
                 soundEffectButtonClick();
 
-                /*
-
-                playWhiteNoise(7);
+                playWhiteNoise(6);
 
                 for (let i = 0; i < 4; i++) {
                     setTimeout(() => {
@@ -1474,8 +1474,6 @@
 
                 await new Promise((resolve) => setTimeout(resolve, 3000));
                 needle.style.left = "0%";
-
-                 */
 
                 if (useNaturalVoice) {
                     speakWithElevenLabs(
@@ -1512,7 +1510,7 @@
                         ));
 
                     if (speechUtterance) {
-                        speechUtterance.volume = 0.25;
+                        speechUtterance.volume = 1.0;
 
                         speechUtterance.onboundary = (event) => {
                             if (event.name === "word") {
@@ -1554,8 +1552,13 @@
                 speechSynth.cancel();
 
                 if (globalAudio) {
-                    globalAudio.pause();
-                    globalAudio.currentTime = 0;
+                    // globalAudio.pause();
+                    // globalAudio.currentTime = 0;
+
+                    // we are caching, so can do this.
+                    // that way, when you hit play again it will
+                    // use new text if it's there, and cache if not.
+                    globalAudio = null;
                 }
             });
 
