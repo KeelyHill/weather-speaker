@@ -419,7 +419,7 @@ input:checked + .switch-label .slider::before {
 .text-section {
     display: flex;
     flex-direction: row;
-    max-height: 200px;
+    /* max-height: 200px; */
 }
 
 .text-section div {

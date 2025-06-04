@@ -268,6 +268,14 @@
                         <input type="checkbox" id="ignore-watches" checked />
                         <span>WATCHES/WARNINGS/ADVISORIES</span>
                     </label>
+                    <label style="display: flex; align-items: center; gap: 5px">
+                        <input
+                            type="checkbox"
+                            id="ignore-preliminary-point"
+                            checked
+                        />
+                        <span>PRELIMINARY POINT</span>
+                    </label>
                 </div>
             </div>
 
@@ -732,6 +740,11 @@
                         document.getElementById("ignore-aviation").checked &&
                         /\n\W*\.AVIATION\b/i.test(sectionText);
 
+                    const ignorePreliminaryPoint =
+                        document.getElementById("ignore-preliminary-point")
+                            .checked &&
+                        /\n\W*\.PRELIMINARY POINT\b/i.test(sectionText);
+
                     // NOTE: this one's regex diverges from others
                     const ignoreWatches =
                         document.getElementById("ignore-watches").checked &&
@@ -744,7 +757,8 @@
                         ignoreLongTerm ||
                         ignoreMarine ||
                         ignoreAviation ||
-                        ignoreWatches;
+                        ignoreWatches ||
+                        ignorePreliminaryPoint;
 
                     if (allowSection && !ignoreSection) {
                         newText += sectionText;
@@ -1107,6 +1121,9 @@
                     aviation:
                         document.getElementById("ignore-aviation").checked,
                     watches: document.getElementById("ignore-watches").checked,
+                    preliminaryPoint: document.getElementById(
+                        "ignore-preliminary-point",
+                    ).checked,
                 };
                 document.cookie = `ignoreSections=${encodeURIComponent(JSON.stringify(ignoreSections))}; path=/; max-age=31536000`;
             }
@@ -1144,6 +1161,12 @@
                                 ignoreSections.watches !== undefined
                                     ? ignoreSections.watches
                                     : true;
+                            document.getElementById(
+                                "ignore-preliminary-point",
+                            ).checked =
+                                ignoreSections.preliminaryPoint !== undefined
+                                    ? ignoreSections.preliminaryPoint
+                                    : false;
                         } catch (e) {
                             console.log(
                                 "Error loading ignore sections from cookies:",
@@ -1435,6 +1458,9 @@
                 .addEventListener("change", updateProcessedText);
             document
                 .getElementById("ignore-watches")
+                .addEventListener("change", updateProcessedText);
+            document
+                .getElementById("ignore-preliminary-point")
                 .addEventListener("change", updateProcessedText);
 
             fetchButton.addEventListener("click", function () {
