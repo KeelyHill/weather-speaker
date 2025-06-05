@@ -1538,16 +1538,16 @@
                     }, i * 1000);
                 }
 
-                if (!element.classList.contains("active")) {
-                    return; // hack to stop early
-                }
-
                 // bring it home...
                 await new Promise((resolve) => setTimeout(resolve, 1000));
                 needle.style.left = "10%";
 
                 await new Promise((resolve) => setTimeout(resolve, 3000));
                 needle.style.left = "0%";
+
+                if (!playButton.classList.contains("active")) {
+                    return; // hack to stop early
+                }
 
                 if (useNaturalVoice) {
                     speakWithElevenLabs(
