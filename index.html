@@ -15,14 +15,8 @@
                 <div class="radio-top">
                     <div>
                         <div class="media-buttons">
-                            <div
-                                id="tune-in-bulb"
-                                class="bulb"
-                                style="margin: auto 0"
-                                title="Tune in (forcast text) status"
-                            ></div>
                             <button class="media-btn" id="fetch-button">
-                                Tune in
+                                Locate
                             </button>
                         </div>
                     </div>
@@ -59,6 +53,12 @@
                             /><span>)</span>
                         </div>
                     </div>
+                    <div
+                        id="tune-in-bulb"
+                        class="bulb"
+                        style="margin: auto 0"
+                        title="Forcast text status"
+                    ></div>
                 </div>
 
                 <div class="radio-controls">
@@ -745,25 +745,23 @@
                 for (section in sections) {
                     const sectionText = sections[section];
 
-                    const allowSection = true; //    /^\W*\.LONG TERM\b/i.test(sectionText);
-
                     const ignoreShortTerm =
                         document.getElementById("ignore-short-term").checked &&
-                        /\n\W*\.SHORT TERM\b/i.test(sectionText);
+                        /\n\.SHORT TERM\b/i.test(sectionText);
                     const ignoreLongTerm =
                         document.getElementById("ignore-long-term").checked &&
-                        /\n\W*\.LONG TERM\b/i.test(sectionText);
+                        /\n\.LONG TERM\b/i.test(sectionText);
                     const ignoreMarine =
                         document.getElementById("ignore-marine").checked &&
-                        /\n\W*\.MARINE\b/i.test(sectionText);
+                        /\n\.MARINE\b/i.test(sectionText);
                     const ignoreAviation =
                         document.getElementById("ignore-aviation").checked &&
-                        /\n\W*\.AVIATION\b/i.test(sectionText);
+                        /\n\.AVIATION\b/i.test(sectionText);
 
                     const ignorePreliminaryPoint =
                         document.getElementById("ignore-preliminary-point")
                             .checked &&
-                        /\n\W*\.PRELIMINARY POINT\b/i.test(sectionText);
+                        /\n\.PRELIMINARY POINT\b/i.test(sectionText);
 
                     // NOTE: this one's regex diverges from others
                     const ignoreWatches =
@@ -778,10 +776,12 @@
                         ignoreWatches ||
                         ignorePreliminaryPoint;
 
-                    if (allowSection && !ignoreSection) {
+                    if (!ignoreSection) {
                         newText += sectionText;
                     }
                 }
+
+                newText = stateAbbrToFullName(newText);
 
                 newText = newText
 
@@ -828,8 +828,6 @@
                     // "0\\.5": "a half",
                 };
 
-                // TODO: add state abbrviations to this (e.g. CA -> California)
-
                 // Iterate over the replacements dictionary and replace each key with its value
                 for (const [key, value] of Object.entries(replacements)) {
                     newText = newText.replace(new RegExp(key, "g"), value);
@@ -851,12 +849,6 @@
                 // reset stuff
                 tuneInBulb.classList.remove("error");
                 forecastContent.textContent = "";
-
-                if (!officeCodeField.value) {
-                    tuneInBulb.classList.add("error");
-                    showError("Please enter office code.");
-                    return;
-                }
 
                 // update the URL so if user refreshes it stays in field
                 const urlParams = new URLSearchParams(window.location.search);
@@ -1487,11 +1479,6 @@
                 .getElementById("ignore-preliminary-point")
                 .addEventListener("change", updateProcessedText);
 
-            fetchButton.addEventListener("click", function () {
-                soundEffectButtonClick();
-                fetchWeather();
-            });
-
             voiceSwitch.addEventListener("change", function () {
                 soundEffectButtonClick();
 
@@ -1502,12 +1489,55 @@
                 }
             });
 
+            fetchButton.addEventListener("click", function () {
+                soundEffectButtonClick();
+
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const { latitude, longitude } = pos.coords;
+                        console.log(`Lat: ${latitude}, Lon: `);
+
+                        fetch(
+                            `https://api.weather.gov/points/${latitude},${longitude}`,
+                        )
+                            .then((response) => {
+                                if (!response.ok)
+                                    throw new Error(
+                                        `HTTP error: ${response.status}`,
+                                    );
+                                return response.json();
+                            })
+                            .then((data) => {
+                                console.log(data.properties);
+                                officeCodeField.value = data.properties.gridId;
+                                officeGridX.value = data.properties.gridX;
+                                officeGridY.value = data.properties.gridY;
+                            })
+                            .catch((err) => {
+                                console.error("Lat/Lon lookup failed:", err);
+                            });
+                    },
+                    (err) => {
+                        console.error("Location error:", err.message);
+                    },
+                    { enableHighAccuracy: false, timeout: 10000 },
+                );
+            });
+
             // Speech controls
             playButton.addEventListener("click", async function () {
+                soundEffectButtonClick();
+
+                if (!officeCodeField.value) {
+                    tuneInBulb.classList.add("error");
+                    showError("Please enter office code.");
+                    return;
+                }
+
                 const useNaturalVoice = voiceSwitch.checked;
                 voiceSwitch.disabled = true;
 
-                soundEffectButtonClick();
+                fetchWeather();
 
                 playWhiteNoise(6);
 
