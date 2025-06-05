@@ -4,6 +4,15 @@
 /* Logo styleized */
 @import url("https://fonts.googleapis.com/css2?family=Monoton&family=Fascinate+Inline&display=swap");
 
+:root {
+    --metal-texture: repeating-linear-gradient(
+        #222 0px,
+        #222 4px,
+        #333 4px,
+        #333 8px
+    );
+}
+
 body {
     background: #080808;
 
@@ -35,7 +44,7 @@ select {
 }
 
 .radio-case {
-    width: 750px;
+    width: 700px;
 
     margin: 50px auto auto auto;
 
@@ -66,21 +75,13 @@ select {
 
     box-shadow: inset 0 0 3px #1e1710;
 
-    padding: 2rem;
+    padding: 20px;
     margin: 30px;
 
     position: relative;
 }
 
 .radio {
-    /* background: repeating-linear-gradient(
-        90deg,
-        #3e3022 0px,
-        #3e3022 10px,
-        #2f2419 10px,
-        #2f2419 25px
-    ); */
-
     background: repeating-linear-gradient(
         90deg,
         #44301e 0px,
@@ -106,11 +107,9 @@ select {
         #382613 56px,
         #382613 60px
     );
-    /* background-color: #3a2b1a; */
 }
 
 .radio a {
-    color: inherit;
     text-decoration: none;
 }
 
@@ -156,10 +155,11 @@ select {
     box-shadow: -2px 0px 4px #555;
 }
 
-.radio-top {
+.radio-line {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 1em 0;
 }
 
 .dial-label {
@@ -183,6 +183,35 @@ select {
     display: flex;
 }
 
+@keyframes glint {
+    0% {
+        transform: translateX(-200%) rotate(25deg);
+    }
+    100% {
+        transform: translateX(200%) rotate(25deg);
+    }
+}
+
+.radio-screen:hover::before {
+    content: "";
+    position: absolute;
+    /* top: -50%;
+    left: -50%; */
+    top: 0%;
+    left: 0%;
+    width: 50%;
+    height: 50%;
+    background: linear-gradient(
+        120deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.15) 50%,
+        transparent 100%
+    );
+    transform: rotate(25deg);
+    animation: glint 0.7s linear forwards;
+    pointer-events: none;
+}
+
 .radio-screen {
     display: inline-grid;
 
@@ -190,7 +219,7 @@ select {
     font-size: 1.6rem;
     font-weight: bold;
 
-    padding: 0 0.6em;
+    padding: 0 0.1em;
     background: #111;
     border: 2px solid #222;
     border-radius: 16px;
@@ -215,7 +244,8 @@ select {
     margin: 7px;
 }
 
-input[type="text"] {
+input[type="text"],
+input[type="password"] {
     padding: 2px;
 
     border: 1px solid #330;
@@ -236,7 +266,9 @@ input[type="text"] {
 }
 
 .radio-speaker {
-    height: 300px;
+    border: 6px solid #111;
+    border-radius: 50%;
+    height: 400px;
     width: 400px;
     margin: auto;
     /* background: repeating-radial-gradient(circle, #333 0 2px, #222 2px 4px); */
@@ -256,20 +288,9 @@ input[type="text"] {
 
     box-shadow: inset 0 0 25px rgba(255, 255, 255, 0.1);
 
-    border: 6px solid #111;
-    border-radius: 35%;
-
     display: flex;
     justify-content: center;
     align-items: center;
-}
-
-.radio-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 2rem 0rem;
-    gap: 2rem;
 }
 
 .radio input[type="checkbox"] {
@@ -339,9 +360,9 @@ input:checked + .switch-label .slider::before {
 }
 
 .label-text {
-    color: #ccc;
+    color: #ccc !important;
     text-align: center;
-    margin: 0 1em;
+    margin: 0 0.5rem;
     background: #222;
     padding: 5px;
     border-radius: 5px;
@@ -369,7 +390,7 @@ input:checked + .switch-label .slider::before {
 .slider {
     position: absolute;
     cursor: pointer;
-    background-color: #444;
+    background: var(--metal-texture);
     border-radius: 34px;
     top: 0;
     left: 0;
@@ -406,26 +427,33 @@ input:checked + .switch-label .slider::before {
 .media-btn {
     font-size: 1.5rem;
     padding: 0.5rem 0.5rem;
-    background: #222;
+    /* background: #222; */
     color: #ccc;
     border: 2px solid #ccc;
     border-radius: 8px;
     cursor: pointer;
+
+    /* metal texture */
+    background: var(--metal-texture);
+
     transition: background 0.2s;
 
-    box-shadow: 0 10px 0px black;
+    box-shadow: 0 12px 0px black;
 }
 
 .media-btn:hover {
-    background: #444;
     transform: translateY(2px);
-    box-shadow: 0 8px 0px black;
+    box-shadow: 0 10px 0px black;
 }
 
 .media-btn:active {
-    background: #777;
-    transform: translateY(8px);
-    box-shadow: 0 2px 0px black;
+    transform: translateY(5px);
+    box-shadow: 0 7px 0 black;
+}
+
+.media-btn.active {
+    transform: translateY(5px);
+    box-shadow: 0 7px 0 black;
 }
 
 /* Other */

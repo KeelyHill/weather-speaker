@@ -12,7 +12,7 @@
             <div class="radio">
                 <div class="antenna"></div>
 
-                <div class="radio-top">
+                <div class="radio-line">
                     <div>
                         <div class="media-buttons">
                             <button class="media-btn" id="fetch-button">
@@ -65,7 +65,7 @@
                     ></div>
                 </div>
 
-                <div class="radio-controls">
+                <div class="radio-line">
                     <div class="toggle-switch">
                         <div class="label-text">Classic<br />Voice</div>
                         <input type="checkbox" id="voice-switch" />
@@ -135,26 +135,8 @@
 
                 <div class="radio-middle">
                     <!-- Extra div here to have a vertical stack next to speaker -->
-                    <div style="margin: 20px 0px">
-                        <div
-                            id="bulb-todo"
-                            class="bulb"
-                            title="TODO TODO TODO"
-                        ></div>
-                    </div>
 
-                    <div class="radio-speaker">
-                        <div
-                            style="
-                                font-family: Monoton, sans-serif;
-                                font-size: 0.8rem;
-                                color: #ccc;
-                                text-shadow: 0 4px 2px black;
-                            "
-                        >
-                            = = =
-                        </div>
-                    </div>
+                    <div class="radio-speaker"></div>
                 </div>
 
                 <div
@@ -1541,6 +1523,9 @@
                 const useNaturalVoice = voiceSwitch.checked;
                 voiceSwitch.disabled = true;
 
+                playButton.classList.add("active");
+                pauseButton.classList.remove("active");
+
                 fetchWeather();
 
                 playWhiteNoise(6);
@@ -1551,6 +1536,10 @@
                             Math.floor(Math.random() * (80 - 10)) + 10;
                         needle.style.left = percent + "%";
                     }, i * 1000);
+                }
+
+                if (!element.classList.contains("active")) {
+                    return; // hack to stop early
                 }
 
                 // bring it home...
@@ -1619,6 +1608,9 @@
             pauseButton.addEventListener("click", function () {
                 soundEffectButtonClick();
 
+                playButton.classList.remove("active");
+                pauseButton.classList.add("active");
+
                 if (speechSynth.speaking) {
                     speechSynth.pause();
                 }
@@ -1630,6 +1622,9 @@
 
             stopButton.addEventListener("click", function () {
                 soundEffectButtonClick();
+
+                playButton.classList.remove("active");
+                pauseButton.classList.remove("active");
 
                 voiceSwitch.disabled = false;
 
