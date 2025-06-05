@@ -20,37 +20,41 @@
                             </button>
                         </div>
                     </div>
-                    <div class="radio-screen">
-                        <div class="needle" id="needle"></div>
+                    <div class="office-screen-container">
+                        <a
+                            class="label-text"
+                            style="cursor: help; margin: 0"
+                            href="https://upload.wikimedia.org/wikipedia/commons/0/05/NWS_Weather_Forecast_Offices.svg"
+                            target="_blank"
+                            >Office:</a
+                        >
+                        <div class="radio-screen">
+                            <div class="needle" id="needle"></div>
 
-                        <div class="radio-screen-inner-text">
-                            <label for="office-code">
-                                <a
-                                    href="https://upload.wikimedia.org/wikipedia/commons/0/05/NWS_Weather_Forecast_Offices.svg"
-                                    target="_blank"
-                                    style="cursor: help"
-                                >
-                                    Office:
-                                </a>
-                            </label>
-                            <input
-                                type="text"
-                                id="office-code"
-                                placeholder="MTR"
-                                style="width: 3.2rem"
-                            />&nbsp;<span>(</span
-                            ><input
-                                type="text"
-                                id="office-grid-x"
-                                placeholder="x"
-                                style="width: 2.2rem"
-                            /><span>,</span
-                            ><input
-                                type="text"
-                                id="office-grid-y"
-                                placeholder="y"
-                                style="width: 2.2rem"
-                            /><span>)</span>
+                            <div class="radio-screen-inner-text">
+                                <label for="office-code"> </label>
+                                <!--NOTE: MATHEMATICAL LEFT FLATTENED PARENTHESIS (U+27EE, Ps): ⟮ -->
+                                <input
+                                    type="text"
+                                    id="office-code"
+                                    placeholder="MTR"
+                                    style="width: 3.2rem"
+                                />&nbsp;<span>⟮</span
+                                ><input
+                                    type="text"
+                                    id="office-grid-x"
+                                    placeholder="x"
+                                    style="width: 2.2rem"
+                                    title="(Optional) Grid X"
+                                /><span>,</span
+                                ><input
+                                    type="text"
+                                    id="office-grid-y"
+                                    placeholder="y"
+                                    style="width: 2.2rem"
+                                    title="(Optional) Grid Y"
+                                /><span>⟯</span>
+                            </div>
                         </div>
                     </div>
                     <div
