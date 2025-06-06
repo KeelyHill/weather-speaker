@@ -2,7 +2,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Kode+Mono&family=Doto&display=swap");
 
 /* Logo styleized */
-@import url("https://fonts.googleapis.com/css2?family=Monoton&family=Fascinate+Inline&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Monoton&display=swap");
 
 :root {
     --orange: rgba(249, 199, 27, 1);
@@ -16,12 +16,11 @@
 }
 
 body {
+    margin: 0;
+    padding: 4rem;
     background: #080808;
 
     font-family: "Kode Mono", monospace;
-
-    margin: 0;
-    padding: 2rem;
     color: #999;
 }
 
@@ -42,11 +41,11 @@ select {
 .radio-platform {
     background: #111;
     border-radius: 1em;
-    height: 100px;
+    height: 150px;
 }
 
 .radio-case {
-    width: 700px;
+    width: 750px;
 
     margin: 50px auto auto auto;
 
@@ -59,19 +58,10 @@ select {
     display: flex;
     flex-direction: column;
 
-    /* box-shadow: 0 0px 50px rgba(200, 190, 150, 0.5); */
     box-shadow: 0 0px 200px rgba(255, 255, 255, 0.3);
-    /* box-shadow: 0 5px 5px white; */
-    /* spotlight */
-    /* box-shadow: 0 -400px 500px rgba(255, 250, 220, 1); */
 }
 
 .radio {
-    /* width: 500px;
-    height: 320px; */
-    /* margin: 50px auto auto auto; */
-    /* background: url("/oak.jpg") center/cover no-repeat; */
-
     border-radius: 30px;
     border: 5px solid #1e1710;
 
@@ -79,7 +69,6 @@ select {
 
     padding: 30px;
     margin: 35px;
-
     position: relative;
 }
 
@@ -142,14 +131,12 @@ select {
 .antenna {
     position: absolute;
     width: 700px;
-    height: 7px;
-    /* background: #999; */
+    height: 8px;
     top: -35px;
     left: 0;
     transform: rotate(-5deg);
     transform-origin: left center;
     z-index: -1;
-    /* box-shadow: 0 0 10px #444; */
 
     background: linear-gradient(to top, #999 50%, #fff);
 }
@@ -159,12 +146,12 @@ select {
     position: absolute;
     right: 0;
     top: 50%;
-    transform: rotate(-2deg) translateY(-60%) translateX(50%);
+    transform: rotate(0deg) translateY(-55%) translateX(50%);
     width: 5px;
-    height: 10px;
-    background: #aaa;
+    height: 12px;
     border-radius: 20%;
     box-shadow: -2px 0px 4px #555;
+    background: #aaa;
 }
 
 .radio-line {
@@ -203,8 +190,6 @@ select {
 .radio-screen:hover::before {
     content: "";
     position: absolute;
-    /* top: -50%;
-    left: -50%; */
     top: 0%;
     left: 0%;
     width: 50%;
@@ -231,7 +216,6 @@ select {
     background: #111;
     border: 2px solid #222;
     border-radius: 16px;
-    /* margin: 0 1rem; */
     position: relative;
     color: rgba(249, 199, 27, 1);
     align-items: center;
@@ -297,7 +281,6 @@ input[type="password"] {
     height: 400px;
     width: 400px;
     margin: 20px auto 0 auto;
-    /* background: repeating-radial-gradient(circle, #333 0 2px, #222 2px 4px); */
 
     background-repeat: repeat;
 
@@ -308,11 +291,9 @@ input[type="password"] {
         repeat;
     background-color: #111;
 
-    /* box-shadow:
+    box-shadow:
         inset 9px 9px 15px rgba(255, 255, 255, 0.1),
-        inset -9px -9px 15px rgba(0, 0, 0, 0.5); */
-
-    box-shadow: inset 0 0 25px rgba(255, 255, 255, 0.1);
+        inset -9px -9px 15px rgba(0, 0, 0, 0.5);
 }
 
 .radio input[type="checkbox"] {
@@ -330,7 +311,6 @@ input:checked + .switch-label .slider::before {
     border-radius: 50% 50% 45% 45%;
     border: 4px solid #222;
     box-shadow: inset 0 0 10px #000;
-    /* margin: 20px 0px; */
     transition:
         background 0.3s,
         box-shadow 0.3s;
@@ -380,7 +360,6 @@ input:checked + .switch-label .slider::before {
     background: #222;
     padding: 5px;
     border-radius: 5px;
-    /* box-shadow: 0 2px black; */
 }
 
 .toggle-switch {
@@ -424,7 +403,6 @@ input:checked + .switch-label .slider::before {
     background-color: #bbb;
     border-radius: 50%;
     transition: 0.3s;
-    /* transform: translateX(-8px); */
     box-shadow: 0 0 15px #000;
 }
 
@@ -441,7 +419,6 @@ input:checked + .switch-label .slider::before {
 .media-btn {
     font-size: 1.5rem;
     padding: 0.5rem 0.5rem;
-    /* background: #222; */
     color: #ccc;
     border: 2px solid #ccc;
     border-radius: 8px;
@@ -490,12 +467,11 @@ input:checked + .switch-label .slider::before {
     flex: 1;
     overflow-y: auto;
     white-space: pre-wrap;
-    background: #f5f5f5;
     padding: 1em;
     border-radius: 4px;
 
     font-family: monospace;
     font-size: 1em;
 
-    background: #444;
+    background: #222;
 }

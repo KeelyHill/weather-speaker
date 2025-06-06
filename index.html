@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>NSW Weather Talker</title>
+        <title>Weather Speaker</title>
         <!-- <link rel="stylesheet" href="css/styles.css" /> -->
         <link rel="stylesheet" href="css/radio.css" />
     </head>
@@ -147,7 +147,7 @@
 
                     <div class="radio-speaker"></div>
 
-                    <div class="logo-text" style="gap: 2rem">
+                    <div class="logo-text" style="gap: 2.8rem">
                         <div>N</div>
                         <div>W</div>
                         <div>S</div>
@@ -176,7 +176,7 @@
 
             <section>
                 <div class="elevenlabs-section">
-                    <h3>ElevenLabs Text to Speech</h3>
+                    <h2>ElevenLabs Text to Speech</h2>
                     <div class="form-group">
                         <label for="elevenlabs-api-key">API Key:</label>
                         <input
@@ -245,6 +245,8 @@
                 </div>
             </div>
 
+            <h3>Raw/Processed Text:</h3>
+
             <div class="text-section">
                 <div
                     class="raw-forecast-content preformat"
@@ -261,14 +263,19 @@
 
             <footer>
                 <p>
-                    "Weather Talker", by
+                    "Weather Speaker", by
                     <a href="https://keelyhill.com">Keely Hill</a>
                     <br />
                     <br />
-                    Weather data sourced from the National Weather Service.
+                    Weather data sourced from the National Weather Service (<a
+                        href="https://api.weather.gov"
+                        target="_blank"
+                        >api.weather.gov</a
+                    >).
                     <br />
                     This is an toy application and not affiliated with the NWS
                     or NOAA.
+                    <br />
                 </p>
             </footer>
         </div>
@@ -377,7 +384,6 @@
                 // Match state abbreviations that are surrounded by word boundaries
                 return text.replace(/\b([A-Z]{2})\b/g, (match, abbr) => {
                     return "" || ""; // Return full name if found, otherwise return original match
-                    // return stateMap[abbr] || match; // Return full name if found, otherwise return original match
                 });
             }
 
@@ -544,7 +550,7 @@
                 // Convert date to spoken words
                 const hours = date.getHours();
                 const minutes = date.getMinutes();
-                const period = hours >= 12 ? "PM" : "AM";
+                const period = hours >= 12 ? "P.M." : "A.M.";
                 const hour12 = hours % 12 || 12;
 
                 const dayNames = [
@@ -653,6 +659,7 @@
                 }
 
                 newText += `It is ${dateToWords(now)}. `;
+
                 newText += "\n\n";
 
                 if (nextGridForecast != null) {
@@ -688,7 +695,6 @@
                     dateToWords(
                         summarySectionProductAndLocationAndTimeSplit[2],
                     ) + ".\n";
-
                 // remove the meta data sections now that I got the time stuff
                 // real content starts at first ".\n"
                 sections[0] = sections[0].replace(/^.*?\.\n/s, ".\n");
@@ -1307,7 +1313,7 @@
             function openAudioCacheDB() {
                 return new Promise((resolve, reject) => {
                     const request = indexedDB.open(
-                        "WeatherTalkerAudioCache",
+                        "WeatherSpeakerAudioCache",
                         1,
                     );
 
