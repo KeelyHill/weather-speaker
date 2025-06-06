@@ -39,21 +39,23 @@
                                     id="office-code"
                                     placeholder="MTR"
                                     style="width: 3.2rem"
-                                />&nbsp;<span>⟮</span
-                                ><input
-                                    type="text"
-                                    id="office-grid-x"
-                                    placeholder="x"
-                                    style="width: 2.2rem"
-                                    title="(Optional) Grid X"
-                                /><span>,</span
-                                ><input
-                                    type="text"
-                                    id="office-grid-y"
-                                    placeholder="y"
-                                    style="width: 2.2rem"
-                                    title="(Optional) Grid Y"
-                                /><span>⟯</span>
+                                /><span style="font-size: 0.8em">
+                                    <span>⟮</span
+                                    ><input
+                                        type="text"
+                                        id="office-grid-x"
+                                        placeholder="x"
+                                        style="width: 2.1rem"
+                                        title="(Optional) Grid X"
+                                    /><span>,</span
+                                    ><input
+                                        type="text"
+                                        id="office-grid-y"
+                                        placeholder="y"
+                                        style="width: 2.1rem"
+                                        title="(Optional) Grid Y"
+                                    /><span>⟯</span>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -136,55 +138,20 @@
                 <div class="radio-middle">
                     <!-- Extra div here to have a vertical stack next to speaker -->
 
-                    <div class="radio-speaker"></div>
-                </div>
+                    <div class="logo-text">
+                        <div>N</div>
+                        <div>O</div>
+                        <div>A</div>
+                        <div>A</div>
+                    </div>
 
-                <div
-                    style="
-                        font-family:
-                            Fascinate Inline,
-                            sans-serif;
-                        font-size: 3.5rem;
-                        color: #ccc;
-                        text-shadow: 0 4px 1px black;
-                        position: absolute;
-                        margin-left: 15px;
-                        bottom: 0;
-                        left: 0;
-                    "
-                >
-                    NOAA
-                </div>
-                <div
-                    style="
-                        font-family:
-                            Fascinate Inline,
-                            sans-serif;
-                        font-size: 3.5rem;
-                        color: #ccc;
-                        text-shadow: 0 4px 1px black;
-                        position: absolute;
-                        margin-right: 15px;
-                        bottom: 0;
-                        right: 0;
-                    "
-                >
-                    NWS
-                </div>
-                <div
-                    style="
-                        font-family: Monoton, sans-serif;
-                        font-size: 1rem;
-                        color: #ccc;
-                        text-shadow: 0 4px 2px black;
-                        position: absolute;
-                        margin-bottom: 5px;
-                        bottom: 0;
-                        left: 50%;
-                        transform: translateX(-50%);
-                    "
-                >
-                    <!-- weather.gov -->
+                    <div class="radio-speaker"></div>
+
+                    <div class="logo-text" style="gap: 2rem">
+                        <div>N</div>
+                        <div>W</div>
+                        <div>S</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -731,6 +698,8 @@
                 for (section in sections) {
                     const sectionText = sections[section];
 
+                    // TODO: FIXME: sometimes the ignoring marine section or aviation also removes the other one.
+
                     const ignoreShortTerm =
                         document.getElementById("ignore-short-term").checked &&
                         /\n\.SHORT TERM\b/i.test(sectionText);
@@ -810,6 +779,7 @@
                     "t-storms": "thunderstorms",
                     Rh: "relative humidity",
                     NorCal: "Northern California",
+                    mph: "miles per hour",
                     // "0\\.25": "a quarter",
                     // "0\\.5": "a half",
                 };
