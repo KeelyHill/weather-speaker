@@ -644,6 +644,19 @@
                 return text.replace(pattern, "");
             }
 
+            function extractUniqueNames(text) {
+                const names = [...text.matchAll(/\.\.+([^\n]+)/g)].map((m) =>
+                    m[1].trim(),
+                );
+                const unique = [...new Set(names)];
+
+                if (unique.length === 1) return unique[0];
+                if (unique.length === 2) return unique.join(" and ");
+                return (
+                    unique.slice(0, -1).join(", ") + ", and " + unique.at(-1)
+                );
+            }
+
             // Function to clean up the text
             function makeTextSpeakable(rawAFDText, nextGridForecast) {
                 var newText = "";
@@ -690,11 +703,17 @@
                     summarySectionProductAndLocationAndTimeSplit[1],
                 ).replace("National Weather Service", "");
 
-                newText += "office, issued at ";
                 newText +=
+                    "office, issued at " +
                     dateToWords(
                         summarySectionProductAndLocationAndTimeSplit[2],
-                    ) + ".\n";
+                    ) +
+                    ", by " +
+                    extractUniqueNames(mainAndFooter[1]) +
+                    ".\n";
+
+                // newText += mainAndFooter[1]
+
                 // remove the meta data sections now that I got the time stuff
                 // real content starts at first ".\n"
                 sections[0] = sections[0].replace(/^.*?\.\n/s, ".\n");
