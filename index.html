@@ -16,7 +16,7 @@
                     <div>
                         <div class="media-buttons">
                             <button class="media-btn" id="fetch-button">
-                                Locate
+                                (X-hair)
                             </button>
                         </div>
                     </div>
@@ -68,18 +68,48 @@
                 </div>
 
                 <div class="radio-line">
-                    <div class="toggle-switch">
-                        <div class="label-text">Classic<br />Voice</div>
-                        <input type="checkbox" id="voice-switch" />
-                        <label for="voice-switch" class="switch-label">
-                            <span class="slider"></span>
+                    <div class="voice-selector">
+                        <div class="voice-selector-slider"></div>
+                        <label class="voice-option">
+                            <input
+                                type="radio"
+                                id="voice-web-browser"
+                                name="voice-type"
+                                value="browser"
+                                checked
+                            />
+                            <span class="voice-label">Classic<br />Voice</span>
                         </label>
-                        <div class="label-text">Natural<br />Voice</div>
-                        <div
-                            id="eleven-labs-status-bulb"
-                            class="bulb"
-                            title="Connection to ElevenLabs"
-                        ></div>
+                        <label class="voice-option">
+                            <input
+                                type="radio"
+                                id="voice-elevenlabs"
+                                name="voice-type"
+                                value="elevenlabs"
+                            />
+                            <span class="voice-label"
+                                >ElevenLabs<br />Voice</span
+                            >
+                            <div
+                                id="eleven-labs-status-bulb"
+                                class="bulb"
+                                title="Connection to ElevenLabs"
+                            ></div>
+                        </label>
+                        <label class="voice-option">
+                            <input
+                                type="radio"
+                                id="voice-openai"
+                                name="voice-type"
+                                value="openai"
+                            />
+                            <span class="voice-label">OpenAI<br />Voice</span>
+                            <div
+                                id="openai-status-bulb"
+                                class="bulb"
+                                title="Connection to OpenAI"
+                            ></div>
+                        </label>
                     </div>
 
                     <div class="media-buttons">
@@ -175,9 +205,9 @@
             </div>
 
             <section>
-                <div class="elevenlabs-section">
+                <div class="settings-section">
                     <h2>ElevenLabs Text to Speech</h2>
-                    <div class="form-group">
+                    <div>
                         <label for="elevenlabs-api-key">API Key:</label>
                         <input
                             type="password"
@@ -186,7 +216,7 @@
                             oninput="saveApiKeyToCookies()"
                         />
                     </div>
-                    <div class="form-group">
+                    <div>
                         <label for="elevenlabs-voice">Voice ID:</label>
                         <input
                             type="text"
@@ -196,6 +226,21 @@
                             oninput="saveVoiceIdToCookies()"
                         />
                         <div id="elevenlabs-usage">xx%</div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <div class="settings-section">
+                    <h2>OpenAI Text to Speech</h2>
+                    <div>
+                        <label for="openai-api-key">API Key:</label>
+                        <input
+                            type="password"
+                            id="openai-api-key"
+                            placeholder="Enter your OpenAI API key"
+                            oninput="saveOpenAIApiKeyToCookies()"
+                        />
                     </div>
                 </div>
             </section>
@@ -300,7 +345,13 @@
 
             const tuneInBulb = document.getElementById("tune-in-bulb");
 
-            const voiceSwitch = document.getElementById("voice-switch");
+            const voiceWebBrowser =
+                document.getElementById("voice-web-browser");
+            const voiceElevenLabs = document.getElementById("voice-elevenlabs");
+            const voiceOpenAI = document.getElementById("voice-openai");
+
+            const openaiStatusBulb =
+                document.getElementById("openai-status-bulb");
 
             const elevenlabsUsage = document.getElementById("elevenlabs-usage");
             const voiceSelect = document.getElementById("voice-select");
@@ -904,7 +955,7 @@
             function updateElevenLabsUsage() {
                 elevenLabsBulb.classList.remove("error");
 
-                const apiKey = getApiKeyFromCookies();
+                const apiKey = getElevenLabsApiKeyFromCookies();
 
                 if (!apiKey) {
                     elevenLabsBulb.classList.add("error");
@@ -1096,7 +1147,7 @@
                 updateElevenLabsUsage();
             }
 
-            function getApiKeyFromCookies() {
+            function getElevenLabsApiKeyFromCookies() {
                 const cookies = document.cookie.split("; ");
                 for (const cookie of cookies) {
                     const [name, value] = cookie.split("=");
@@ -1461,15 +1512,34 @@
                 .getElementById("ignore-preliminary-point")
                 .addEventListener("change", updateProcessedText);
 
-            voiceSwitch.addEventListener("change", function () {
-                soundEffectButtonClick();
+            // Voice selection event listeners
+            const voiceSlider = document.querySelector(
+                ".voice-selector-slider",
+            );
 
-                // Update UI if we plan to use this.
-
-                if (voiceSwitch.checked) {
-                    updateElevenLabsUsage();
+            function updateVoiceSlider() {
+                voiceSlider.className = "voice-selector-slider";
+                if (voiceElevenLabs.checked) {
+                    voiceSlider.classList.add("position-elevenlabs");
+                } else if (voiceOpenAI.checked) {
+                    voiceSlider.classList.add("position-openai");
                 }
+                // Default position (browser) requires no additional class
+            }
+
+            [voiceWebBrowser, voiceElevenLabs, voiceOpenAI].forEach((radio) => {
+                radio.addEventListener("change", function () {
+                    soundEffectButtonClick();
+                    updateVoiceSlider();
+
+                    if (voiceElevenLabs.checked) {
+                        updateElevenLabsUsage();
+                    }
+                });
             });
+
+            // Initialize slider position
+            updateVoiceSlider();
 
             fetchButton.addEventListener("click", function () {
                 soundEffectButtonClick();
@@ -1516,8 +1586,12 @@
                     return;
                 }
 
-                const useNaturalVoice = voiceSwitch.checked;
-                voiceSwitch.disabled = true;
+                const selectedVoice = document.querySelector(
+                    'input[name="voice-type"]:checked',
+                ).value;
+                voiceWebBrowser.disabled = true;
+                voiceElevenLabs.disabled = true;
+                voiceOpenAI.disabled = true;
 
                 playButton.classList.add("active");
                 pauseButton.classList.remove("active");
@@ -1545,7 +1619,8 @@
                     return; // hack to stop early
                 }
 
-                if (useNaturalVoice) {
+                if (selectedVoice === "elevenlabs") {
+                    console.log("Play: ElevenLabs");
                     speakWithElevenLabs(
                         "Example. Unsettled weather returns today and continues into early next week.",
                     );
@@ -1556,7 +1631,21 @@
                     } else {
                         showError("No forecast text available to speak.");
                     }
+                } else if (selectedVoice === "openai") {
+                    console.log("Play: OpenAI");
+                    return;
+                    speakWithOpenAI(
+                        "Example. Unsettled weather returns today and continues into early next week.",
+                    );
+                    return;
+
+                    if (forecastContent.textContent) {
+                        speakWithOpenAI(forecastContent.textContent);
+                    } else {
+                        showError("No forecast text available to speak.");
+                    }
                 } else {
+                    console.log("Play: Classic");
                     // Check if speech synthesis is supported
                     if (!("speechSynthesis" in window)) {
                         alert(
@@ -1622,7 +1711,9 @@
                 playButton.classList.remove("active");
                 pauseButton.classList.remove("active");
 
-                voiceSwitch.disabled = false;
+                voiceWebBrowser.disabled = false;
+                voiceElevenLabs.disabled = false;
+                voiceOpenAI.disabled = false;
 
                 speechSynth.cancel();
 
@@ -1647,7 +1738,8 @@
 
             loadIgnoreSectionsFromCookies();
 
-            getApiKeyFromCookies();
+            getElevenLabsApiKeyFromCookies();
+            getOpenAIApiKeyFromCookies();
             loadVoiceIdFromCookies();
 
             // load office code from URL if exists
