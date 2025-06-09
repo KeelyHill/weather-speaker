@@ -15,8 +15,62 @@
                 <div class="radio-line">
                     <div>
                         <div class="media-buttons">
-                            <button class="media-btn" id="fetch-button">
-                                (X-hair)
+                            <button
+                                class="media-btn media-btn-square"
+                                id="get-location-button"
+                                title="Get Location"
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <!-- Outer ring -->
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="6"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                    />
+                                    <!-- Cardinal ticks -->
+                                    <line
+                                        x1="12"
+                                        y1="2"
+                                        x2="12"
+                                        y2="4"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                    />
+                                    <line
+                                        x1="12"
+                                        y1="20"
+                                        x2="12"
+                                        y2="22"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                    />
+                                    <line
+                                        x1="2"
+                                        y1="12"
+                                        x2="4"
+                                        y2="12"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                    />
+                                    <line
+                                        x1="20"
+                                        y1="12"
+                                        x2="22"
+                                        y2="12"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                    />
+                                </svg>
                             </button>
                         </div>
                     </div>
@@ -355,7 +409,9 @@
             const officeGridX = document.getElementById("office-grid-x");
             const officeGridY = document.getElementById("office-grid-y");
 
-            const fetchButton = document.getElementById("fetch-button");
+            const getLocationButton = document.getElementById(
+                "get-location-button",
+            );
             const playButton = document.getElementById("play-button");
             const pauseButton = document.getElementById("pause-button");
             const stopButton = document.getElementById("stop-button");
@@ -1657,7 +1713,7 @@
             // Initialize slider position
             updateVoiceSlider();
 
-            fetchButton.addEventListener("click", function () {
+            getLocationButton.addEventListener("click", function () {
                 soundEffectButtonClick();
 
                 navigator.geolocation.getCurrentPosition(
@@ -1680,6 +1736,7 @@
                                 officeCodeField.value = data.properties.gridId;
                                 officeGridX.value = data.properties.gridX;
                                 officeGridY.value = data.properties.gridY;
+                                fetchWeather();
                             })
                             .catch((err) => {
                                 console.error("Lat/Lon lookup failed:", err);
