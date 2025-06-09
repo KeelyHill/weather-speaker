@@ -128,7 +128,13 @@ select {
 }
 
 .radio a {
+}
+
+.help-link,
+.help-link:visited {
     text-decoration: none;
+    cursor: help;
+    color: inherit;
 }
 
 @keyframes wobble {

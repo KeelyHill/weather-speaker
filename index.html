@@ -22,8 +22,8 @@
                     </div>
                     <div class="office-screen-container">
                         <a
-                            class="label-text"
-                            style="cursor: help; margin: 0"
+                            class="label-text help-link"
+                            style="margin: 0"
                             href="https://upload.wikimedia.org/wikipedia/commons/0/05/NWS_Weather_Forecast_Offices.svg"
                             target="_blank"
                             >Office:</a
@@ -208,7 +208,14 @@
                 <div class="settings-section">
                     <h2>ElevenLabs Text to Speech</h2>
                     <div>
-                        <label for="elevenlabs-api-key">API Key:</label>
+                        <label for="elevenlabs-api-key"
+                            ><a
+                                href="https://elevenlabs.io/app/settings/api-keys"
+                                class="help-link"
+                                target="_blank"
+                                >API Key:</a
+                            ></label
+                        >
                         <input
                             type="password"
                             id="elevenlabs-api-key"
@@ -217,7 +224,14 @@
                         />
                     </div>
                     <div>
-                        <label for="elevenlabs-voice">Voice ID:</label>
+                        <label for="elevenlabs-voice"
+                            ><a
+                                href="https://elevenlabs.io/app/voice-lab"
+                                class="help-link"
+                                target="_blank"
+                                >Voice ID:</a
+                            ></label
+                        >
                         <input
                             type="text"
                             id="elevenlabs-voice"
@@ -234,7 +248,14 @@
                 <div class="settings-section">
                     <h2>OpenAI Text to Speech</h2>
                     <div>
-                        <label for="openai-api-key">API Key:</label>
+                        <label for="openai-api-key"
+                            ><a
+                                href="https://platform.openai.com/settings/organization/api-keys"
+                                class="help-link"
+                                target="_blank"
+                                >API Key:</a
+                            ></label
+                        >
                         <input
                             type="password"
                             id="openai-api-key"
@@ -321,6 +342,8 @@
                     This is an toy application and not affiliated with the NWS
                     or NOAA.
                     <br />
+                    API keys are stored in cookies.
+                    <br />
                     Voice audio is generated, not pre-recorded.
                 </p>
             </footer>
@@ -354,8 +377,10 @@
                 document.getElementById("openai-status-bulb");
 
             const elevenlabsUsage = document.getElementById("elevenlabs-usage");
-            const voiceSelect = document.getElementById("voice-select");
-            const forecastContent = document.getElementById("forecast-content");
+            const voiceSelect = document.getElementById("voice-select"); // TODO rename to be eleven specific
+
+            const cleanForecastContent =
+                document.getElementById("forecast-content");
             const rawForecastContent = document.getElementById(
                 "raw-forecast-content",
             );
@@ -881,7 +906,7 @@
 
                 // reset stuff
                 tuneInBulb.classList.remove("error");
-                forecastContent.textContent = "";
+                cleanForecastContent.textContent = "";
 
                 // update the URL so if user refreshes it stays in field
                 const urlParams = new URLSearchParams(window.location.search);
@@ -941,7 +966,7 @@
                 );
 
                 // Format and display the text
-                forecastContent.textContent = discussionText;
+                cleanForecastContent.textContent = discussionText;
 
                 // Update status UI
                 loadingIndicator.style.display = "none";
@@ -974,7 +999,7 @@
                             throw new Error(
                                 `ElevenLabs API error: ${response.status}`,
                             );
-                            console.log(response);
+                            console.log(response.json());
                             elevenLabsBulb.classList.add("error");
                         }
                         return response.json();
@@ -1037,20 +1062,16 @@
 
             // Function to use ElevenLabs for text-to-speech
             async function speakWithElevenLabs(text) {
-                // dummy audio for debug
-                // const audioUrl =
-                //     "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3";
-                //
-                //
-
                 if (globalAudio) {
                     playURLAudio(null);
-                    // showError("Already have audio.");
                     return;
                 }
 
                 // Check if we have saved audio for this text
-                const savedBlob = await loadAudioFromStorageCache(text);
+                const savedBlob = await loadAudioFromStorageCache(
+                    text,
+                    "elevenlabs-cache",
+                );
                 if (savedBlob) {
                     const audioUrl = URL.createObjectURL(savedBlob);
                     console.log("Using saved audio:", audioUrl);
@@ -1071,11 +1092,6 @@
 
                 if (!voiceId) {
                     showError("Please enter a ElevenLabs voice ID");
-                    return;
-                }
-
-                if (!text || text.trim() === "") {
-                    showError("No text to speak");
                     return;
                 }
 
@@ -1110,33 +1126,35 @@
                 })
                     .then((response) => {
                         if (!response.ok) {
+                            console.log(response);
+
                             throw new Error(
                                 `ElevenLabs API error: ${response.status}`,
                             );
-                            console.log(response);
                         }
                         updateElevenLabsUsage();
                         return response.blob();
                     })
                     .then((blob) => {
-                        // Save audio to storage for future use
-                        saveAudioToStorageCache(text, blob);
+                        saveAudioToStorageCache(text, blob, "elevenlabs-cache");
 
-                        // Create audio element and play audio
                         const audioUrl = URL.createObjectURL(blob);
 
-                        console.log(`ElevenLabs Blob: ${blob}`);
-                        console.log(`ElevenLabs URL: ${audioUrl}`);
+                        console.log(`ElevenLabs Resp Blob: ${blob}`);
+                        console.log(`ElevenLabs Resp URL: ${audioUrl}`);
 
                         playURLAudio(audioUrl);
 
-                        // Hide loading indicator
                         loadingIndicator.style.display = "none";
                     })
                     .catch((error) => {
-                        console.error("Error with ElevenLabs API:", error);
-                        alert(`Error: ${error.message}`);
                         loadingIndicator.style.display = "none";
+
+                        console.error("Error with ElevenLabs API:", error);
+                        showError(`OpenAI TTS error: ${error.message}`);
+
+                        elevenLabsBulb.classList.add("error");
+                        elevenLabsBulb.classList.remove("on");
                     });
             }
 
@@ -1158,6 +1176,106 @@
                     }
                 }
                 return null;
+            }
+
+            function saveOpenAIApiKeyToCookies() {
+                const apiKey = document.getElementById("openai-api-key").value;
+                document.cookie = `openaiApiKey=${encodeURIComponent(apiKey)}; path=/; max-age=31536000`;
+                updateElevenLabsUsage();
+            }
+
+            function getOpenAIApiKeyFromCookies() {
+                const cookies = document.cookie.split("; ");
+                for (const cookie of cookies) {
+                    const [name, value] = cookie.split("=");
+                    if (name === "openaiApiKey") {
+                        document.getElementById("openai-api-key").value =
+                            decodeURIComponent(value);
+                        return decodeURIComponent(value);
+                    }
+                }
+                return null;
+            }
+
+            async function speakWithOpenAI(text) {
+                if (globalAudio) {
+                    playURLAudio(null);
+                    return;
+                }
+
+                const savedBlob = await loadAudioFromStorageCache(
+                    text,
+                    "openai-cache",
+                );
+                if (savedBlob) {
+                    const audioUrl = URL.createObjectURL(savedBlob);
+                    console.log("Using saved audio:", audioUrl);
+                    playURLAudio(audioUrl);
+                    openaiStatusBulb.classList.add("on");
+                    return;
+                }
+
+                const apiKey = getOpenAIApiKeyFromCookies();
+                if (!apiKey) {
+                    showError(
+                        "OpenAI API key not found. Please enter your API key in the settings.",
+                    );
+                    openaiStatusBulb.classList.add("error");
+                    return;
+                }
+
+                const loadingIndicator = document.getElementById("loading");
+                loadingIndicator.style.display = "block";
+
+                openaiStatusBulb.classList.remove("error");
+                openaiStatusBulb.classList.add("on");
+
+                fetch("https://api.openai.com/v1/audio/speech", {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${apiKey}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-4o-mini-tts",
+                        input: text,
+                        instructions:
+                            "Voice: Baritone public radio host. Clean, cool, and consistent. Personality: NOT monotone. Be engaging and show personal interest in the topic. Explain 'why', not just 'what'. Speed: Keep a slightly faster than normal pace, do not drag. Finish sentences at little faster. Pronunciation: Words should be pronounced clearly, especially technical ones. Some of the technical terms are several words and should flow together.",
+                        voice: "verse",
+                        speed: 1,
+                    }),
+                })
+                    .then((response) => {
+                        if (!response.ok) {
+                            console.log(response);
+
+                            throw new Error(
+                                `OpenAI API error: ${response.status}`,
+                            );
+                        }
+                        return response.blob();
+                    })
+                    .then((blob) => {
+                        saveAudioToStorageCache(text, blob, "openai-cache");
+
+                        const audioUrl = URL.createObjectURL(blob);
+
+                        console.log(`OpenAI Resp Blob: ${blob}`);
+                        console.log(`OpenAI Resp URL: ${audioUrl}`);
+
+                        playURLAudio(audioUrl);
+
+                        loadingIndicator.style.display = "none";
+                    })
+                    .catch((error) => {
+                        loadingIndicator.style.display = "none";
+
+                        console.error("OpenAI TTS error:", error);
+                        showError(`OpenAI TTS error: ${error.message}`);
+
+                        openaiStatusBulb.classList.add("error");
+                        openaiStatusBulb.classList.remove("on");
+                    });
             }
 
             function saveIgnoreSectionsToCookies() {
@@ -1367,10 +1485,7 @@
 
             // Add event listeners for ignore section checkboxes
             function updateProcessedText() {
-                const rawText = rawForecastContent.textContent;
-                if (rawText) {
-                    forecastContent.textContent = makeTextSpeakable(rawText);
-                }
+                fetchWeather();
                 saveIgnoreSectionsToCookies();
             }
 
@@ -1378,6 +1493,17 @@
             function showError(message) {
                 errorMessageBox.textContent = message;
                 errorMessageBox.style.display = "block";
+            }
+
+            async function generateTextHash(text) {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(text);
+                const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray
+                    .map((b) => b.toString(16).padStart(2, "0"))
+                    .join("");
+                return hashHex;
             }
 
             // Audio storage functions using IndexedDB
@@ -1402,22 +1528,11 @@
                 });
             }
 
-            async function generateTextHash(text) {
-                const encoder = new TextEncoder();
-                const data = encoder.encode(text);
-                const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                const hashHex = hashArray
-                    .map((b) => b.toString(16).padStart(2, "0"))
-                    .join("");
-                return hashHex;
-            }
-
             /** Using `text` as the look up "key" for the cache. */
-            async function saveAudioToStorageCache(text, blob) {
+            async function saveAudioToStorageCache(text, blob, voiceSource) {
                 try {
                     // Generate hash first
-                    const textHash = await generateTextHash(text);
+                    const textHash = await generateTextHash(voiceSource + text);
                     console.log(`textHash=${textHash}`);
 
                     // Then start transaction
@@ -1431,6 +1546,7 @@
                     const audioData = {
                         textHash: textHash,
                         blob: blob,
+                        voiceSource: voiceSource,
                         timestamp: Date.now(),
                     };
 
@@ -1441,10 +1557,10 @@
                 }
             }
 
-            async function loadAudioFromStorageCache(text) {
+            async function loadAudioFromStorageCache(text, voiceSource) {
                 try {
                     // Generate hash first
-                    const textHash = await generateTextHash(text);
+                    const textHash = await generateTextHash(voiceSource + text);
                     console.log(`textHash=${textHash}`);
 
                     // Then start transaction
@@ -1596,28 +1712,32 @@
                 playButton.classList.add("active");
                 pauseButton.classList.remove("active");
 
-                fetchWeather();
+                // fetchWeather();
 
-                playWhiteNoise(6);
+                if (false) {
+                    playWhiteNoise(6);
 
-                for (let i = 0; i < 4; i++) {
-                    setTimeout(() => {
-                        const percent =
-                            Math.floor(Math.random() * (80 - 10)) + 10;
-                        needle.style.left = percent + "%";
-                    }, i * 1000);
+                    for (let i = 0; i < 4; i++) {
+                        setTimeout(() => {
+                            const percent =
+                                Math.floor(Math.random() * (80 - 10)) + 10;
+                            needle.style.left = percent + "%";
+                        }, i * 1000);
+                    }
+
+                    // bring it home...
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
+                    needle.style.left = "10%";
+
+                    await new Promise((resolve) => setTimeout(resolve, 3000));
+                    needle.style.left = "0%";
                 }
-
-                // bring it home...
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-                needle.style.left = "10%";
-
-                await new Promise((resolve) => setTimeout(resolve, 3000));
-                needle.style.left = "0%";
 
                 if (!playButton.classList.contains("active")) {
                     return; // hack to stop early
                 }
+
+                console.log("Will speak:", cleanForecastContent.textContent);
 
                 if (selectedVoice === "elevenlabs") {
                     console.log("Play: ElevenLabs");
@@ -1626,21 +1746,21 @@
                     );
                     return;
 
-                    if (forecastContent.textContent) {
-                        speakWithElevenLabs(forecastContent.textContent);
+                    if (cleanForecastContent.textContent) {
+                        speakWithElevenLabs(cleanForecastContent.textContent);
                     } else {
                         showError("No forecast text available to speak.");
                     }
                 } else if (selectedVoice === "openai") {
                     console.log("Play: OpenAI");
-                    return;
+
                     speakWithOpenAI(
                         "Example. Unsettled weather returns today and continues into early next week.",
                     );
                     return;
 
-                    if (forecastContent.textContent) {
-                        speakWithOpenAI(forecastContent.textContent);
+                    if (cleanForecastContent.textContent) {
+                        speakWithOpenAI(cleanForecastContent.textContent);
                     } else {
                         showError("No forecast text available to speak.");
                     }
@@ -1659,7 +1779,7 @@
                     }
 
                     speechUtterance = new SpeechSynthesisUtterance(
-                        forecastContent.textContent,
+                        cleanForecastContent.textContent,
                     );
                     const voices = speechSynthesis.getVoices();
 
@@ -1700,6 +1820,8 @@
                     speechSynth.pause();
                 }
 
+                console.log("Pause.", globalAudio);
+
                 if (globalAudio && !globalAudio.paused) {
                     globalAudio.pause();
                 }
@@ -1718,12 +1840,10 @@
                 speechSynth.cancel();
 
                 if (globalAudio) {
-                    // globalAudio.pause();
-                    // globalAudio.currentTime = 0;
-
-                    // we are caching, so can do this.
+                    // we are caching, so can set to null
                     // that way, when you hit play again it will
                     // use new text if it's there, and cache if not.
+                    globalAudio.pause(); // pause first! else race condition bug I think
                     globalAudio = null;
                 }
             });
@@ -1752,8 +1872,7 @@
                 fetchWeather();
             }
 
-            const apiKey = document.getElementById("elevenlabs-api-key").value;
-            if (apiKey) {
+            if (getElevenLabsApiKeyFromCookies()) {
                 updateElevenLabsUsage();
             }
         </script>
