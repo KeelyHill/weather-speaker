@@ -978,23 +978,37 @@
                 errorMessageBox.style.display = "none";
 
                 const afdUrl = `https://api.weather.gov/products/types/AFD/locations/${officeCodeField.value}/latest`;
-                const gridForecastUrl = `https://api.weather.gov/gridpoints/${officeCodeField.value}/${officeGridX.value},${officeGridY.value}/forecast`;
+                const gridX = officeGridX.value;
+                const gridY = officeGridY.value;
+
+                const doingGridForecast = gridX && gridY;
+                const gridForecastUrl = doingGridForecast
+                    ? `https://api.weather.gov/gridpoints/${officeCodeField.value}/${gridX},${gridY}/forecast`
+                    : null;
 
                 console.log("NWS API URL for AFD:", afdUrl);
-                console.log(
-                    "NWS API URL for local grid forecast:",
-                    gridForecastUrl,
-                );
+                if (doingGridForecast) {
+                    console.log(
+                        "NWS API URL for local grid forecast:",
+                        gridForecastUrl,
+                    );
+                }
 
-                const [afdResp, gridForecastResp] = await Promise.all([
-                    fetch(afdUrl),
-                    fetch(gridForecastUrl),
-                ]);
+                const afdResp = await fetch(afdUrl);
+                const afdObj = await afdResp.json();
 
-                const [afdObj, gridForcastObj] = await Promise.all([
-                    afdResp.json(),
-                    gridForecastResp.json(),
-                ]);
+                let gridForecastResp = null;
+                let gridForcastObj = null;
+
+                if (doingGridForecast) {
+                    try {
+                        gridForecastResp = await fetch(gridForecastUrl);
+                        gridForcastObj = await gridForecastResp.json();
+                    } catch (e) {
+                        console.warn("Grid forecast fetch failed:", e);
+                        gridForcastObj = null;
+                    }
+                }
 
                 // // //
 
