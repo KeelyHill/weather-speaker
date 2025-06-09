@@ -433,10 +433,10 @@
                     MP: "Northern Mariana Islands",
                 };
 
-                // Match state abbreviations that are surrounded by word boundaries
-                return text.replace(/\b([A-Z]{2})\b/g, (match, abbr) => {
-                    return "" || ""; // Return full name if found, otherwise return original match
-                });
+                return text.replace(
+                    /\b([A-Z]{2})\b/g,
+                    (match, abbr) => stateMap[abbr] || match,
+                );
             }
 
             function numberToWords(n) {
