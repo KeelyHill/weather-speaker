@@ -482,7 +482,6 @@
             );
 
             const elevenlabsUsage = document.getElementById("elevenlabs-usage");
-            const voiceSelect = document.getElementById("voice-select"); // TODO rename to be eleven specific
 
             const cleanForecastContent =
                 document.getElementById("forecast-content");
@@ -779,14 +778,14 @@
             }
 
             // Function to get appropriate greeting based on time
-            function getTimeBasedGreeting(date = new Date()) {
+            function getTimeBasedGreetingPhrase(date = new Date()) {
                 const hours = date.getHours();
 
                 if (hours > 3 && hours < 11) {
                     return "Good morning";
-                } else if (hours > 12 && hours < 19) {
+                } else if (hours > 12 && hours < 18) {
                     return "Good afternoon";
-                } else if (hours > 19) {
+                } else if (hours > 18) {
                     return "Good evening";
                 } else {
                     return "Hello";
@@ -838,27 +837,38 @@
                 );
             }
 
+            function makeGreetingText() {
+                var greetingText = "";
+
+                // manually do the summary since it's format is a bit different
+                const now = new Date();
+                const greetingWords = getTimeBasedGreetingPhrase(now);
+
+                if (glob_users_name) {
+                    greetingText += `${greetingWords}, ${glob_users_name}! `;
+                } else {
+                    greetingText += `${greetingWords}! `;
+                }
+
+                greetingText += `It is ${dateToWords(now)}. `;
+
+                greetingText += "\n\n";
+
+                if (false) {
+                    greetingText += `Random number is: ${Math.floor(Math.random() * 1000)}`;
+                }
+
+                return greetingText;
+            }
+
             // Function to clean up the text
             function makeTextSpeakable(rawAFDText, nextGridForecast) {
                 var newText = "";
 
-                // manually do the summary since it's format is a bit different
-                const now = new Date();
-                const greetingWords = getTimeBasedGreeting(now);
+                newText += makeGreetingText();
 
-                if (glob_users_name) {
-                    newText += `${greetingWords}, ${glob_users_name}! `;
-                } else {
-                    newText += `${greetingWords}! `;
-                }
-
-                // TODO split this out so you don't need a whole request anytime the minute changes
-                newText += `It is ${dateToWords(now)}. `;
-
-                newText += "\n\n";
-
-                // newText += `Random number is: ${Math.floor(Math.random() * 1000)}`;
-                // return newText;
+                ///////////////////////
+                // local forcast (if grid location given)
 
                 if (nextGridForecast != null) {
                     newText += `Locally ${nextGridForecast.name.toLowerCase()}: ${nextGridForecast.detailedForecast}`;
@@ -957,6 +967,9 @@
                     .replace(/^Issued at.*\n/gm, "")
                     .replace(/^\.{3}New.*\n/gm, "")
                     .replace(/^Key Messages\n\n/gm, "")
+
+                    // remove since I don't want to convert to speakable inline like this
+                    .replace(/^Updated at.*\n/gm, "")
 
                     // clean up ranges (5-6 becomes 5 to 6)
                     .replace(/(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)/g, "$1 to $2")
@@ -1190,7 +1203,7 @@
                 globalAudio = new Audio(audioUrl);
 
                 globalAudio.addEventListener("timeupdate", () => {
-                    if (globalAudio.duration > 0) {
+                    if (globalAudio && globalAudio.duration > 0) {
                         const percent =
                             (globalAudio.currentTime / globalAudio.duration) *
                             100;
@@ -2164,8 +2177,6 @@
                 if (speechSynth.speaking) {
                     speechSynth.pause();
                 }
-
-                console.log("Pause.", globalAudio);
 
                 if (globalAudio && !globalAudio.paused) {
                     globalAudio.pause();
