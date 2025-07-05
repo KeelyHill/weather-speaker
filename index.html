@@ -164,6 +164,20 @@
                                 title="Connection to OpenAI"
                             ></div>
                         </label>
+                        <label class="voice-option">
+                            <input
+                                type="radio"
+                                id="voice-resemble"
+                                name="voice-type"
+                                value="resemble"
+                            />
+                            <span class="voice-label">Resemble<br />Voice</span>
+                            <div
+                                id="resemble-status-bulb"
+                                class="bulb"
+                                title="Connection to Resemble.ai"
+                            ></div>
+                        </label>
                     </div>
 
                     <div class="media-buttons">
@@ -319,6 +333,36 @@
                     </div>
                 </div>
             </section>
+            <section>
+                <div class="settings-section">
+                    <h2>Resemble Text to Speech</h2>
+                    <div>
+                        <label for="resemble-api-key"
+                            ><a
+                                href="https://app.resemble.ai/account/api"
+                                class="help-link"
+                                target="_blank"
+                                >API Token:</a
+                            ></label
+                        >
+                        <input
+                            type="password"
+                            id="resemble-api-key"
+                            placeholder="Enter your Resemble.ai API Token"
+                            oninput="saveResembleApiKeyToCookies()"
+                        />
+                    </div>
+                    <div>
+                        <label for="resemble-voice-uuid">Voice UUID:</label>
+                        <input
+                            type="text"
+                            id="resemble-voice-uuid"
+                            placeholder="Enter your Voice UUID"
+                            oninput="saveResembleVoiceUUIDToCookies()"
+                        />
+                    </div>
+                </div>
+            </section>
 
             <hr />
 
@@ -428,9 +472,14 @@
                 document.getElementById("voice-web-browser");
             const voiceElevenLabs = document.getElementById("voice-elevenlabs");
             const voiceOpenAI = document.getElementById("voice-openai");
+            const voiceResemble = document.getElementById("voice-resemble");
 
             const openaiStatusBulb =
                 document.getElementById("openai-status-bulb");
+
+            const resembleStatusBulb = document.getElementById(
+                "resemble-status-bulb",
+            );
 
             const elevenlabsUsage = document.getElementById("elevenlabs-usage");
             const voiceSelect = document.getElementById("voice-select"); // TODO rename to be eleven specific
@@ -803,13 +852,13 @@
                     newText += `${greetingWords}! `;
                 }
 
+                // TODO split this out so you don't need a whole request anytime the minute changes
                 newText += `It is ${dateToWords(now)}. `;
 
                 newText += "\n\n";
 
-                newText += `Random number is: ${Math.floor(Math.random() * 1000)}`;
-
-                return newText;
+                // newText += `Random number is: ${Math.floor(Math.random() * 1000)}`;
+                // return newText;
 
                 if (nextGridForecast != null) {
                     newText += `Locally ${nextGridForecast.name.toLowerCase()}: ${nextGridForecast.detailedForecast}`;
@@ -840,7 +889,7 @@
                 ).replace("National Weather Service", "");
 
                 newText +=
-                    "office, issued at " +
+                    " office, issued at " +
                     dateToWords(
                         summarySectionProductAndLocationAndTimeSplit[2],
                     ) +
@@ -941,6 +990,7 @@
                     temps: "temperatures",
                     "t-storms": "thunderstorms",
                     Rh: "relative humidity",
+                    RH: "relative humidity",
                     NorCal: "Northern California",
                     mph: "miles per hour",
                     // "0\\.25": "a quarter",
@@ -1115,7 +1165,24 @@
                         globalAudio.currentTime = 0;
                     }
 
-                    globalAudio.play();
+                    // In Chrome, play() returns a Promise
+                    const playPromise = globalAudio.play();
+
+                    if (playPromise !== undefined) {
+                        playPromise
+                            .then(() => {
+                                console.log(
+                                    "Audio playback started successfully",
+                                );
+                            })
+                            .catch((error) => {
+                                console.error("Audio playback error:", error);
+                                // Show a play button overlay when autoplay is blocked
+                                showError(
+                                    "Audio playback was blocked by your browser. Please click the play button again.",
+                                );
+                            });
+                    }
 
                     return;
                 }
@@ -1138,7 +1205,22 @@
                     }
                 });
 
-                globalAudio.play();
+                // In Chrome, play() returns a Promise
+                const playPromise = globalAudio.play();
+
+                if (playPromise !== undefined) {
+                    playPromise
+                        .then(() => {
+                            console.log("Audio playback started successfully");
+                        })
+                        .catch((error) => {
+                            console.error("Audio playback error:", error);
+                            // Show a play button overlay when autoplay is blocked
+                            showError(
+                                "Audio playback was blocked by your browser. Please click the play button again.",
+                            );
+                        });
+                }
             }
 
             // Function to use ElevenLabs for text-to-speech
@@ -1258,12 +1340,51 @@
                 updateElevenLabsUsage();
             }
 
+            function saveResembleApiKeyToCookies() {
+                const apiKey =
+                    document.getElementById("resemble-api-key").value;
+                document.cookie = `resembleApiKey=${encodeURIComponent(apiKey)}; path=/; max-age=31536000`;
+            }
+
+            function saveResembleVoiceUUIDToCookies() {
+                const voiceUUID = document.getElementById(
+                    "resemble-voice-uuid",
+                ).value;
+                document.cookie = `resembleVoiceUUID=${encodeURIComponent(voiceUUID)}; path=/; max-age=31536000`;
+            }
+
             function getOpenAIApiKeyFromCookies() {
                 const cookies = document.cookie.split("; ");
                 for (const cookie of cookies) {
                     const [name, value] = cookie.split("=");
                     if (name === "openaiApiKey") {
                         document.getElementById("openai-api-key").value =
+                            decodeURIComponent(value);
+                        return decodeURIComponent(value);
+                    }
+                }
+                return null;
+            }
+
+            function getResembleApiKeyFromCookies() {
+                const cookies = document.cookie.split("; ");
+                for (const cookie of cookies) {
+                    const [name, value] = cookie.split("=");
+                    if (name === "resembleApiKey") {
+                        document.getElementById("resemble-api-key").value =
+                            decodeURIComponent(value);
+                        return decodeURIComponent(value);
+                    }
+                }
+                return null;
+            }
+
+            function getResembleVoiceUUIDFromCookies() {
+                const cookies = document.cookie.split("; ");
+                for (const cookie of cookies) {
+                    const [name, value] = cookie.split("=");
+                    if (name === "resembleVoiceUUID") {
+                        document.getElementById("resemble-voice-uuid").value =
                             decodeURIComponent(value);
                         return decodeURIComponent(value);
                     }
@@ -1300,7 +1421,7 @@
                 openaiStatusBulb.classList.remove("error");
                 openaiStatusBulb.classList.add("loading");
 
-                // Using proper async/await pattern to ensure URL is returned correctly
+                // TODO: right now one request maximum is 4096 chars
                 try {
                     const response = await fetch(
                         "https://api.openai.com/v1/audio/speech",
@@ -1346,6 +1467,116 @@
                 } finally {
                     openaiStatusBulb.classList.remove("loading");
                     openaiStatusBulb.classList.add("on");
+                }
+            }
+
+            async function speakWithResemble(text) {
+                if (globalAudio) {
+                    return null;
+                }
+
+                const savedBlob = await loadAudioFromStorageCache(
+                    text,
+                    "resemble-cache",
+                );
+                if (savedBlob) {
+                    const audioUrl = URL.createObjectURL(savedBlob);
+                    console.log("Using saved audio from cache:", audioUrl);
+                    resembleStatusBulb.classList.add("on");
+                    return audioUrl; // Return URL instead of playing directly
+                }
+
+                const apiKey = getResembleApiKeyFromCookies();
+                const voiceUUID = getResembleVoiceUUIDFromCookies();
+
+                if (!apiKey) {
+                    showError(
+                        "Resemble API Token not found. Please enter your API Token in the settings.",
+                    );
+                    resembleStatusBulb.classList.add("error");
+                    return;
+                }
+
+                if (!voiceUUID) {
+                    console.log("Using default Resemble Voice UUID: f4da4639");
+                    // Continue with default UUID
+                }
+
+                resembleStatusBulb.classList.remove("error");
+                resembleStatusBulb.classList.add("loading");
+
+                // TODO: right now one request maximum is 3000 chars
+                try {
+                    // Use the correct /synthesize endpoint
+                    const synthesizeResponse = await fetch(
+                        "https://f.cluster.resemble.ai/synthesize",
+                        {
+                            method: "POST",
+                            headers: {
+                                Authorization: `Bearer ${apiKey}`,
+                                "Content-Type": "application/json",
+                                "Accept-Encoding": "gzip, deflate, br",
+                            },
+                            body: JSON.stringify({
+                                voice_uuid: voiceUUID || "f4da4639",
+                                data: text,
+                                output_format: "mp3",
+                                title: "NSW Weather Forecast",
+                            }),
+                        },
+                    );
+
+                    if (!synthesizeResponse.ok) {
+                        console.log(synthesizeResponse);
+                        throw new Error(
+                            `Resemble API error: ${synthesizeResponse.status}`,
+                        );
+                    }
+
+                    // Parse the JSON response which contains base64-encoded audio
+                    const responseData = await synthesizeResponse.json();
+
+                    if (!responseData.success) {
+                        throw new Error(
+                            `Resemble synthesis failed: ${responseData.issues?.join(", ") || "Unknown error"}`,
+                        );
+                    }
+
+                    console.log("Resemble response:", responseData);
+
+                    // Convert base64 audio_content to a binary Blob
+                    const binaryString = atob(responseData.audio_content);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+
+                    // Create a blob with the appropriate MIME type
+                    const mimeType =
+                        responseData.output_format === "mp3"
+                            ? "audio/mpeg"
+                            : "audio/wav";
+                    const blob = new Blob([bytes], { type: mimeType });
+                    const audioUrl = URL.createObjectURL(blob);
+
+                    console.log(
+                        `Resemble audio duration: ${responseData.duration} seconds`,
+                    );
+                    console.log(`Resemble audio URL: ${audioUrl}`);
+
+                    await saveAudioToStorageCache(text, blob, "resemble-cache");
+
+                    return audioUrl;
+                } catch (error) {
+                    console.error("Resemble TTS error:", error);
+                    showError(`Resemble TTS error: ${error.message}`);
+
+                    resembleStatusBulb.classList.add("error");
+                    resembleStatusBulb.classList.remove("on");
+                    return null;
+                } finally {
+                    resembleStatusBulb.classList.remove("loading");
+                    resembleStatusBulb.classList.add("on");
                 }
             }
 
@@ -1710,17 +1941,27 @@
                     voiceSlider.classList.add("position-elevenlabs");
                 } else if (voiceOpenAI.checked) {
                     voiceSlider.classList.add("position-openai");
+                } else if (voiceResemble.checked) {
+                    voiceSlider.classList.add("position-resemble");
                 }
                 // Default position (browser) requires no additional class
             }
 
-            [voiceWebBrowser, voiceElevenLabs, voiceOpenAI].forEach((radio) => {
+            [
+                voiceWebBrowser,
+                voiceElevenLabs,
+                voiceOpenAI,
+                voiceResemble,
+            ].forEach((radio) => {
                 radio.addEventListener("change", function () {
                     soundEffectButtonClick();
                     updateVoiceSlider();
 
                     if (voiceElevenLabs.checked) {
                         updateElevenLabsUsage();
+                    } else if (voiceResemble.checked) {
+                        // No usage API for Resemble yet, but could add in future
+                        resembleStatusBulb.classList.remove("error");
                     }
                 });
             });
@@ -1780,13 +2021,14 @@
                 voiceWebBrowser.disabled = true;
                 voiceElevenLabs.disabled = true;
                 voiceOpenAI.disabled = true;
+                voiceResemble.disabled = true;
 
                 playButton.classList.add("active");
                 pauseButton.classList.remove("active");
 
-                // fetchWeather();
+                fetchWeather();
 
-                if (false) {
+                if (true) {
                     playWhiteNoise(6);
 
                     for (let i = 0; i < 4; i++) {
@@ -1831,7 +2073,34 @@
                             cleanForecastContent.textContent,
                         );
                         console.log("Awaited:", url);
-                        playURLAudio(url);
+                        if (url) {
+                            playURLAudio(url);
+                        }
+                    } else {
+                        showError("No forecast text available to speak.");
+                    }
+                } else if (selectedVoice === "resemble") {
+                    console.log("Play: Resemble");
+
+                    if (cleanForecastContent.textContent) {
+                        try {
+                            playButton.disabled = true; // Disable during processing
+                            let url = await speakWithResemble(
+                                cleanForecastContent.textContent,
+                            );
+                            console.log("Resemble audio URL:", url);
+                            if (url) {
+                                // We're in a user-initiated event handler (click), so playback should work
+                                playURLAudio(url);
+                            }
+                        } catch (error) {
+                            console.error("Resemble playback error:", error);
+                            showError(
+                                `Resemble playback error: ${error.message}`,
+                            );
+                        } finally {
+                            playButton.disabled = false;
+                        }
                     } else {
                         showError("No forecast text available to speak.");
                     }
@@ -1912,6 +2181,7 @@
                 voiceWebBrowser.disabled = false;
                 voiceElevenLabs.disabled = false;
                 voiceOpenAI.disabled = false;
+                voiceResemble.disabled = false;
 
                 speechSynth.cancel();
 
@@ -1938,6 +2208,8 @@
 
             getElevenLabsApiKeyFromCookies();
             getOpenAIApiKeyFromCookies();
+            getResembleApiKeyFromCookies();
+            getResembleVoiceUUIDFromCookies();
             loadVoiceIdFromCookies();
 
             // load office code from URL if exists
