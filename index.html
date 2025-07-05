@@ -2183,6 +2183,9 @@
             playButton.addEventListener("click", async function () {
                 soundEffectButtonClick();
 
+                playButton.classList.add("active");
+                pauseButton.classList.remove("active");
+
                 if (globalAudio) {
                     globalAudio.play();
                     return;
@@ -2201,9 +2204,6 @@
                 voiceElevenLabs.disabled = true;
                 voiceOpenAI.disabled = true;
                 voiceResemble.disabled = true;
-
-                playButton.classList.add("active");
-                pauseButton.classList.remove("active");
 
                 if (true) {
                     playWhiteNoise(6); // duration of effects, will loop until stopped
