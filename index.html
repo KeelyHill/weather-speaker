@@ -243,7 +243,7 @@
                         <div>A</div>
                     </div>
 
-                    <div class="radio-speaker"></div>
+                    <div id="radio-speaker" class="radio-speaker"></div>
 
                     <div class="logo-text" style="gap: 2.8rem">
                         <div>N</div>
@@ -494,6 +494,7 @@
             let speechUtterance = null;
 
             var globalAudio = null;
+
             let whiteNoiseAudioCtx = new (window.AudioContext ||
                 window.webkitAudioContext)();
             let whiteNoiseSource = null;
@@ -880,6 +881,7 @@
                 // I started to implement, but was fighting global audio overwrite,
                 // I think it's gonna need a little rearch for audio queing or something.
                 newText += makeGreetingText();
+                return newText;
 
                 ///////////////////////
                 // local forcast (if grid location given)
@@ -1180,6 +1182,36 @@
                     });
             }
 
+            function setupAudioAnalyser(audioEl) {
+                const ctx = new (window.AudioContext ||
+                    window.webkitAudioContext)();
+                const source = ctx.createMediaElementSource(audioEl);
+                const analyser = ctx.createAnalyser();
+
+                analyser.fftSize = 256;
+                source.connect(analyser);
+                analyser.connect(ctx.destination);
+
+                return { ctx, analyser };
+            }
+
+            function startSpeakerAnimation(analyser, el) {
+                const data = new Uint8Array(analyser.frequencyBinCount);
+                const movementGain = 0.2;
+
+                function frame() {
+                    analyser.getByteFrequencyData(data);
+                    const avg =
+                        data.reduce((sum, v) => sum + v, 0) / data.length;
+                    console.log(avg / 255);
+                    const scale = 1 + (avg / 256 - 0.0) * movementGain;
+                    el.style.transform = `scale(${scale.toFixed(2)})`;
+                    requestAnimationFrame(frame);
+                }
+
+                requestAnimationFrame(frame);
+            }
+
             function playURLAudio(audioUrl) {
                 if (globalAudio) {
                     if (!globalAudio.paused && !globalAudio.ended) {
@@ -1214,6 +1246,7 @@
                 }
 
                 globalAudio = new Audio(audioUrl);
+                const { analyser, ctx } = setupAudioAnalyser(globalAudio);
 
                 globalAudio.addEventListener("timeupdate", () => {
                     if (globalAudio && globalAudio.duration > 0) {
@@ -1242,6 +1275,12 @@
                     playPromise
                         .then(() => {
                             console.log("Audio playback started successfully");
+
+                            ctx.resume();
+                            startSpeakerAnimation(
+                                analyser,
+                                document.getElementById("radio-speaker"),
+                            );
                         })
                         .catch((error) => {
                             console.error("Audio playback error:", error);
@@ -2319,6 +2358,9 @@
                     globalAudio.pause(); // pause first! else race condition bug I think
                     globalAudio = null;
                 }
+
+                document.getElementById("radio-speaker").style.transform =
+                    `scale(1)`;
 
                 stopWhiteNoise(1);
             }
