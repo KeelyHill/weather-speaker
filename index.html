@@ -407,15 +407,14 @@
             <h3>Raw/Processed Text:</h3>
 
             <div class="text-section">
-                <div
-                    class="raw-forecast-content preformat"
-                    id="raw-forecast-content"
-                ></div>
+                <div class="preformat" id="raw-forecast-content"></div>
                 <div style="font-size: 40px; align-items: center">→</div>
-                <div
-                    class="forecast-content preformat"
-                    id="forecast-content"
-                ></div>
+                <div class="preformat" id="clean-forecast-content"></div>
+            </div>
+            <div>
+                Cleaned:
+                <span id="clean-forecast-content-line-numbers"></span>
+                characters.
             </div>
 
             <hr />
@@ -478,8 +477,12 @@
 
             const elevenlabsUsage = document.getElementById("elevenlabs-usage");
 
-            const cleanForecastContent =
-                document.getElementById("forecast-content");
+            const cleanForecastLineNumbers = document.getElementById(
+                "clean-forecast-content-line-numbers",
+            );
+            const cleanForecastContent = document.getElementById(
+                "clean-forecast-content",
+            );
             const rawForecastContent = document.getElementById(
                 "raw-forecast-content",
             );
@@ -870,8 +873,7 @@
             function makeTextSpeakable(rawAFDText, nextGridForecast) {
                 var newText = "";
 
-                // newText += makeGreetingText();
-                // return newText;
+                newText += makeGreetingText();
 
                 ///////////////////////
                 // local forcast (if grid location given)
@@ -1035,6 +1037,7 @@
                 // reset stuff
                 tuneInBulb.classList.remove("error");
                 cleanForecastContent.textContent = "";
+                cleanForecastLineNumbers.textContent = `${cleanForecastContent.textContent.length}`;
 
                 // update the URL so if user refreshes it stays in field
                 const urlParams = new URLSearchParams(window.location.search);
@@ -1105,6 +1108,7 @@
                     rawAFDText,
                     nextGridForecast,
                 );
+                cleanForecastLineNumbers.textContent = `${cleanForecastContent.textContent.length}`;
 
                 // Update status UI
                 tuneInBulb.classList.add("on");
