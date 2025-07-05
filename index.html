@@ -886,9 +886,12 @@
                 // split into sections (by &&)
 
                 const mainAndFooter = rawAFDText.split("\n$$\n");
-                var sections = mainAndFooter[0].split("\n&&\n");
+
+                var sections = mainAndFooter[0].split(/(?=\n\.)/);
 
                 const summarySectionSplit = sections[0].split("\n\n");
+                // remove the weird meta data sections now that I got the time stuff
+                sections[0] = "";
 
                 const summarySectionProductAndLocationAndTimeSplit =
                     summarySectionSplit[1].split("\n");
@@ -913,18 +916,12 @@
                     extractUniqueNames(mainAndFooter[1]) +
                     ".\n";
 
-                // newText += mainAndFooter[1]
-
-                // remove the meta data sections now that I got the time stuff
-                // real content starts at first ".\n"
-                sections[0] = sections[0].replace(/^.*?\.\n/s, ".\n");
-
                 // finaly put all the sections back,
                 // select which ones
                 for (section in sections) {
-                    const sectionText = sections[section];
+                    // newText += "\n++++++++++++++++++++++++++++\n";
 
-                    // TODO: FIXME: sometimes the ignoring marine section or aviation also removes the other one.
+                    const sectionText = sections[section].replace("\n&&\n", "");
 
                     const ignoreShortTerm =
                         document.getElementById("ignore-short-term").checked &&
@@ -960,7 +957,7 @@
                     if (!ignoreSection) {
                         newText += sectionText;
                     }
-                }
+                } // end: for (section in sections)
 
                 newText = stateAbbrToFullName(newText);
 
@@ -971,7 +968,7 @@
 
                     // replacing when lines start with things not to be spoken
                     .replace(/^Issued at.*\n/gm, "")
-                    .replace(/^\.{3}New.*\n/gm, "")
+                    .replace(/^\.{2}New.*\n/gm, "")
                     .replace(/^Key Messages\n\n/gm, "")
 
                     // remove since I don't want to convert to speakable inline like this
