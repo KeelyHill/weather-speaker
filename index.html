@@ -1295,8 +1295,7 @@
             // Function to use ElevenLabs for text-to-speech
             async function speakWithElevenLabs(text) {
                 if (globalAudio) {
-                    playURLAudio(null);
-                    return;
+                    return null;
                 }
 
                 // Check if we have saved audio for this text
@@ -1307,8 +1306,7 @@
                 if (savedBlob) {
                     const audioUrl = URL.createObjectURL(savedBlob);
                     console.log("Using saved audio:", audioUrl);
-                    playURLAudio(audioUrl);
-                    return;
+                    return audioUrl;
                 }
 
                 const apiKey =
@@ -1319,12 +1317,12 @@
 
                 if (!apiKey) {
                     showError("Please enter your ElevenLabs API key");
-                    return;
+                    return null;
                 }
 
                 if (!voiceId) {
                     showError("Please enter a ElevenLabs voice ID");
-                    return;
+                    return null;
                 }
 
                 updateElevenLabsUsage();
@@ -1347,41 +1345,40 @@
                     },
                 });
 
-                fetch(url, {
-                    method: "POST",
-                    headers: headers,
-                    body: body,
-                })
-                    .then((response) => {
-                        if (!response.ok) {
-                            console.log(response);
-
-                            throw new Error(
-                                `ElevenLabs API error: ${response.status}`,
-                            );
-                        }
-                        updateElevenLabsUsage();
-                        return response.blob();
-                    })
-                    .then((blob) => {
-                        saveAudioToStorageCache(text, blob, "elevenlabs-cache");
-
-                        const audioUrl = URL.createObjectURL(blob);
-
-                        console.log(`ElevenLabs Resp Blob: ${blob}`);
-                        console.log(`ElevenLabs Resp URL: ${audioUrl}`);
-
-                        playURLAudio(audioUrl);
-                    })
-                    .catch((error) => {
-                        console.error("Error with ElevenLabs API:", error);
-                        showError(`OpenAI TTS error: ${error.message}`);
-
-                        needle.classList.remove("loading");
-                        elevenLabsBulb.classList.add("error");
-                        elevenLabsBulb.classList.remove("on");
-                        elevenLabsBulb.classList.remove("loading");
+                try {
+                    const response = await fetch(url, {
+                        method: "POST",
+                        headers: headers,
+                        body: body,
                     });
+
+                    if (!response.ok) {
+                        console.log(response);
+                        throw new Error(
+                            `ElevenLabs API error: ${response.status}`,
+                        );
+                    }
+
+                    updateElevenLabsUsage();
+                    const blob = await response.blob();
+                    saveAudioToStorageCache(text, blob, "elevenlabs-cache");
+
+                    const audioUrl = URL.createObjectURL(blob);
+                    console.log(`ElevenLabs Resp Blob: ${blob}`);
+                    console.log(`ElevenLabs Resp URL: ${audioUrl}`);
+
+                    return audioUrl;
+                } catch (error) {
+                    console.error("Error with ElevenLabs API:", error);
+                    showError(`ElevenLabs TTS error: ${error.message}`);
+
+                    needle.classList.remove("loading");
+                    elevenLabsBulb.classList.add("error");
+                    elevenLabsBulb.classList.remove("on");
+                    elevenLabsBulb.classList.remove("loading");
+
+                    return null;
+                }
             }
 
             function saveApiKeyToCookies() {
@@ -2228,7 +2225,23 @@
                     // return;
 
                     if (cleanForecastContent.textContent) {
-                        speakWithElevenLabs(cleanForecastContent.textContent);
+                        try {
+                            playButton.disabled = true; // Disable during processing
+                            let url = await speakWithElevenLabs(
+                                cleanForecastContent.textContent,
+                            );
+                            console.log("ElevenLabs audio URL:", url);
+                            if (url) {
+                                playURLAudio(url);
+                            }
+                        } catch (error) {
+                            console.error(
+                                "Error with ElevenLabs playback:",
+                                error,
+                            );
+                        } finally {
+                            playButton.disabled = false;
+                        }
                     } else {
                         showError("No forecast text available to speak.");
                     }
@@ -2236,6 +2249,8 @@
                     console.log("Play: OpenAI");
 
                     if (cleanForecastContent.textContent) {
+                        playButton.disabled = true; // Disable during processing
+
                         let url = await speakWithOpenAI(
                             cleanForecastContent.textContent,
                         );
@@ -2243,6 +2258,7 @@
                         if (url) {
                             playURLAudio(url);
                         }
+                        playButton.disabled = false;
                     } else {
                         showError("No forecast text available to speak.");
                     }
