@@ -188,96 +188,7 @@ function numberToOrdinal(n) {
   return ordinals[n] || n.toString();
 }
 
-// Unified function to convert any date (Date object or string) to spoken words
 function dateToWords(dateInput) {
-  const dayShortToLongMap = {
-    Sun: "Sunday",
-    Mon: "Monday",
-    Tue: "Tuesday",
-    Wed: "Wednesday",
-    Thu: "Thursday",
-    Fri: "Friday",
-    Sat: "Saturday",
-  };
-
-  const monthShortToLongMap = {
-    Jan: "January",
-    Feb: "February",
-    Mar: "March",
-    Apr: "April",
-    May: "May",
-    Jun: "June",
-    Jul: "July",
-    Aug: "August",
-    Sep: "September",
-    Oct: "October",
-    Nov: "November",
-    Dec: "December",
-  };
-
-  let date;
-
-  if (dateInput instanceof Date) {
-    date = dateInput;
-  } else if (typeof dateInput === "string") {
-    // Parse strings like "1124 AM PDT Sun Jun 1 2025"
-    // First normalize the time format
-    let normalizedInput = dateInput.replace(
-      /\b(\d{1,2})(\d{2})\s*([AP]M)\b/gi,
-      "$1:$2 $3",
-    );
-
-    // Try to parse the normalized string
-    date = new Date(normalizedInput);
-
-    // If that fails, try a more manual approach
-    if (isNaN(date.getTime())) {
-      const match = normalizedInput.match(
-        /(\d{1,2}):(\d{2})\s*([AP]M)\s+([A-Z]+)\s+(\w{3})\s+(\w{3})\s+(\d{1,2})\s+(\d{4})/,
-      );
-      if (match) {
-        const [, hours, minutes, ampm, tz, dow, monthShort, day, year] = match;
-        const monthNum = Object.keys(monthShortToLongMap).indexOf(monthShort);
-        if (monthNum !== -1) {
-          date = new Date(
-            year,
-            monthNum,
-            day,
-            ampm === "PM" && hours !== "12"
-              ? parseInt(hours) + 12
-              : ampm === "AM" && hours === "12"
-                ? 0
-                : parseInt(hours),
-            parseInt(minutes),
-          );
-        }
-      }
-    }
-  } else {
-    // Default to current date if input is invalid
-    date = new Date();
-  }
-
-  // If we still don't have a valid date, use current date
-  if (!date || isNaN(date.getTime())) {
-    date = new Date();
-  }
-
-  // Convert date to spoken words
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
-  const period = hours >= 12 ? "P.M." : "A.M.";
-  const hour12 = hours % 12 || 12;
-
-  const dayNames = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
   const monthNames = [
     "January",
     "February",
@@ -293,21 +204,83 @@ function dateToWords(dateInput) {
     "December",
   ];
 
+  const dayNames = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
+  const parseDate = (input) => {
+    if (input instanceof Date) return input;
+
+    if (typeof input === "string") {
+      const normalizedInput = input.replace(
+        /\b(\d{1,2})(\d{2})\s*([AP]M)\b/gi,
+        "$1:$2 $3",
+      );
+
+      let date = new Date(normalizedInput);
+      if (!isNaN(date)) return date;
+
+      const match = normalizedInput.match(
+        /(\d{1,2}):(\d{2})\s*([AP]M)\s+([A-Z]+)\s+(\w{3})\s+(\w{3})\s+(\d{1,2})\s+(\d{4})/,
+      );
+      if (match) {
+        const [, hours, minutes, ampm, tz, dow, monthShort, day, year] = match;
+        const monthShortToIndex = {
+          Jan: 0,
+          Feb: 1,
+          Mar: 2,
+          Apr: 3,
+          May: 4,
+          Jun: 5,
+          Jul: 6,
+          Aug: 7,
+          Sep: 8,
+          Oct: 9,
+          Nov: 10,
+          Dec: 11,
+        };
+
+        const monthNum = monthShortToIndex[monthShort];
+        if (monthNum !== undefined) {
+          const h24 =
+            ampm === "PM" && hours !== "12"
+              ? +hours + 12
+              : ampm === "AM" && hours === "12"
+                ? 0
+                : +hours;
+          return new Date(year, monthNum, +day, h24, +minutes);
+        }
+      }
+    }
+
+    return new Date();
+  };
+
+  let date = parseDate(dateInput);
+  if (!date || isNaN(date.getTime())) date = new Date();
+
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const period = hours >= 12 ? "P.M." : "A.M.";
+  const hour12 = hours % 12 || 12;
+
+  const hourInWords = numberToWords(hour12);
+  const minuteInWords =
+    minutes === 0
+      ? "o'clock"
+      : minutes < 10
+        ? `o' ${numberToWords(minutes)}`
+        : numberToWords(minutes);
+
   const dayName = dayNames[date.getDay()];
   const monthName = monthNames[date.getMonth()];
   const dayOfMonth = date.getDate();
-
-  // Format time in words
-  const hourInWords = numberToWords(hour12);
-  let minuteInWords;
-  if (minutes === 0) {
-    minuteInWords = "o'clock";
-  } else if (minutes < 10) {
-    minuteInWords = `o' ${numberToWords(minutes)}`;
-  } else {
-    minuteInWords = numberToWords(minutes);
-  }
-
   const dayInWords = numberToOrdinal(dayOfMonth);
 
   return `${hourInWords} ${minuteInWords} ${period}, ${dayName} ${monthName} ${dayInWords}`;
