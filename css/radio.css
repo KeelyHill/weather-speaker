@@ -298,6 +298,27 @@ input[type="password"]::placeholder {
     color: #666;
 }
 
+@keyframes needleRandomDance {
+    0% {
+        left: 0%;
+    }
+    20% {
+        left: 20%;
+    }
+    40% {
+        left: 80%;
+    }
+    60% {
+        left: 33%;
+    }
+    80% {
+        left: 50%;
+    }
+    100% {
+        left: 0%;
+    }
+}
+
 .needle {
     position: absolute;
     top: 0;
@@ -305,7 +326,11 @@ input[type="password"]::placeholder {
     width: 2px;
     background: #dd1111;
     left: 0%;
-    transition: left 1s ease-out;
+    transition: left 0.6s ease-in-out;
+}
+
+.needle.loading {
+    animation: needleRandomDance 6s ease-in-out infinite;
 }
 
 .radio-middle {

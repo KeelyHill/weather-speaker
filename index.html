@@ -267,11 +267,6 @@
         <hr />
 
         <div class="container">
-            <div class="loading" id="loading">
-                <div class="loader"></div>
-                <p>Fetching weather discussion...</p>
-            </div>
-
             <section>
                 <div class="settings-section">
                     <h2>ElevenLabs Text to Speech</h2>
@@ -495,6 +490,16 @@
             let speechUtterance = null;
 
             var globalAudio = null;
+            let whiteNoiseAudioCtx = new (window.AudioContext ||
+                window.webkitAudioContext)();
+            let whiteNoiseSource = null;
+            let whiteNoiseGainNode = null;
+            let whiteNoiseFilter = null;
+            let whiteNoiseInitialized = false;
+            let whiteNoiseBuffer = null;
+
+            // Initialize white noise buffer immediately
+            initializeWhiteNoise(30);
 
             /**
             String and message utils
@@ -865,7 +870,8 @@
             function makeTextSpeakable(rawAFDText, nextGridForecast) {
                 var newText = "";
 
-                newText += makeGreetingText();
+                // newText += makeGreetingText();
+                // return newText;
 
                 ///////////////////////
                 // local forcast (if grid location given)
@@ -1026,7 +1032,8 @@
                 // console.log(`Office code: ${officeCodeField.value}`);
 
                 // do a little dance
-                needle.style.left = `${Math.random() * 20}%`;
+                // needle.style.left = `${Math.random() * 10}%`;
+                needle.classList.add("loading");
 
                 // reset stuff
                 tuneInBulb.classList.remove("error");
@@ -1097,16 +1104,15 @@
                 rawForecastContent.textContent = rawAFDText;
 
                 // Clean up the text
-                discussionText = makeTextSpeakable(
+                cleanForecastContent.textContent = makeTextSpeakable(
                     rawAFDText,
                     nextGridForecast,
                 );
 
-                // Format and display the text
-                cleanForecastContent.textContent = discussionText;
-
                 // Update status UI
                 tuneInBulb.classList.add("on");
+
+                needle.classList.remove("loading");
             }
 
             /**
@@ -1204,6 +1210,10 @@
 
                 globalAudio.addEventListener("timeupdate", () => {
                     if (globalAudio && globalAudio.duration > 0) {
+                        if (globalAudio.currentTime > 1) {
+                            stopWhiteNoise(1);
+                        }
+
                         const percent =
                             (globalAudio.currentTime / globalAudio.duration) *
                             100;
@@ -1321,6 +1331,7 @@
                         console.error("Error with ElevenLabs API:", error);
                         showError(`OpenAI TTS error: ${error.message}`);
 
+                        needle.classList.remove("loading");
                         elevenLabsBulb.classList.add("error");
                         elevenLabsBulb.classList.remove("on");
                         elevenLabsBulb.classList.remove("loading");
@@ -1433,6 +1444,7 @@
 
                 openaiStatusBulb.classList.remove("error");
                 openaiStatusBulb.classList.add("loading");
+                needle.classList.add("loading");
 
                 // TODO: right now one request maximum is 4096 chars
                 try {
@@ -1479,6 +1491,7 @@
                     return null;
                 } finally {
                     openaiStatusBulb.classList.remove("loading");
+                    needle.classList.remove("loading");
                     openaiStatusBulb.classList.add("on");
                 }
             }
@@ -1517,6 +1530,7 @@
 
                 resembleStatusBulb.classList.remove("error");
                 resembleStatusBulb.classList.add("loading");
+                needle.classList.add("loading");
 
                 // TODO: right now one request maximum is 3000 chars
                 try {
@@ -1588,6 +1602,7 @@
                     resembleStatusBulb.classList.remove("on");
                     return null;
                 } finally {
+                    needle.classList.remove("loading");
                     resembleStatusBulb.classList.remove("loading");
                     resembleStatusBulb.classList.add("on");
                 }
@@ -1720,82 +1735,185 @@
                 source.start();
             }
 
-            function playWhiteNoise(duration) {
-                const audioCtx = new (window.AudioContext ||
-                    window.webkitAudioContext)();
-                const bufferSize = duration * audioCtx.sampleRate;
-                const noiseBuffer = audioCtx.createBuffer(
-                    1,
-                    bufferSize,
-                    audioCtx.sampleRate,
-                );
-                const output = noiseBuffer.getChannelData(0);
+            function initializeWhiteNoise(duration = 30) {
+                // Reset audio context if needed
+                if (whiteNoiseAudioCtx === null) {
+                    whiteNoiseAudioCtx = new (window.AudioContext ||
+                        window.webkitAudioContext)();
+                }
 
-                let i = 0;
-                while (i < bufferSize) {
-                    output[i] = Math.random() * 2 - 1;
+                whiteNoiseInitialized = true;
 
-                    if (Math.random() < 0.001) {
-                        const burstLength =
-                            500 + Math.floor(Math.random() * 1000);
-                        const burstAmplitude = 0.5 + Math.random() * 0.5;
-                        for (
-                            let j = 0;
-                            j < burstLength && i + j < bufferSize;
-                            j++
-                        ) {
-                            output[i + j] =
-                                (Math.random() * 2 - 1) * burstAmplitude;
+                // Create noise buffer if it doesn't exist yet
+                if (!whiteNoiseBuffer) {
+                    const bufferSize = duration * whiteNoiseAudioCtx.sampleRate;
+                    whiteNoiseBuffer = whiteNoiseAudioCtx.createBuffer(
+                        1,
+                        bufferSize,
+                        whiteNoiseAudioCtx.sampleRate,
+                    );
+                    const output = whiteNoiseBuffer.getChannelData(0);
+
+                    // Generate white noise with occasional bursts
+                    let i = 0;
+                    while (i < bufferSize) {
+                        output[i] = Math.random() * 2 - 1;
+
+                        if (Math.random() < 0.001) {
+                            const burstLength =
+                                500 + Math.floor(Math.random() * 1000);
+                            const burstAmplitude = 0.5 + Math.random() * 0.5;
+                            for (
+                                let j = 0;
+                                j < burstLength && i + j < bufferSize;
+                                j++
+                            ) {
+                                output[i + j] =
+                                    (Math.random() * 2 - 1) * burstAmplitude;
+                            }
+                            i += burstLength;
+                        } else {
+                            i++;
                         }
-                        i += burstLength;
-                    } else {
-                        i++;
                     }
                 }
 
-                const whiteNoise = audioCtx.createBufferSource();
-                whiteNoise.buffer = noiseBuffer;
-                whiteNoise.loop = false;
+                // Create and configure filter if it doesn't exist
+                if (!whiteNoiseFilter) {
+                    whiteNoiseFilter = whiteNoiseAudioCtx.createBiquadFilter();
+                    whiteNoiseFilter.type = "lowpass";
+                    whiteNoiseFilter.Q.value = 0.7;
+                }
 
-                const gainNode = audioCtx.createGain();
-                const filter = audioCtx.createBiquadFilter();
-                filter.type = "lowpass";
-                // filter.frequency.setValueAtTime(10000, audioCtx.currentTime); // Cut highs
-                filter.frequency.setValueAtTime(4000, audioCtx.currentTime);
-                filter.frequency.linearRampToValueAtTime(
-                    1000,
-                    audioCtx.currentTime + duration * 0.6,
-                ); // Cut highs
-                filter.Q.value = 0.7;
+                // Create and configure gain node if it doesn't exist
+                if (!whiteNoiseGainNode) {
+                    whiteNoiseGainNode = whiteNoiseAudioCtx.createGain();
+                    whiteNoiseGainNode.gain.value = 0; // Start silent
+                    whiteNoiseGainNode.connect(whiteNoiseAudioCtx.destination);
+                    whiteNoiseFilter.connect(whiteNoiseGainNode);
+                }
 
-                const now = audioCtx.currentTime;
+                // Create a new source node
+                createWhiteNoiseSource();
+
+                return whiteNoiseSource;
+            }
+
+            function createWhiteNoiseSource() {
+                // Create and configure white noise source
+                whiteNoiseSource = whiteNoiseAudioCtx.createBufferSource();
+                whiteNoiseSource.buffer = whiteNoiseBuffer;
+                whiteNoiseSource.loop = true; // Enable looping for continuous playback
+                whiteNoiseSource.isPlaying = false;
+                whiteNoiseSource.connect(whiteNoiseFilter);
+
+                return whiteNoiseSource;
+            }
+
+            function playWhiteNoise(effectDuration = 10) {
+                // Initialize if not already initialized
+                if (
+                    !whiteNoiseInitialized ||
+                    whiteNoiseAudioCtx === null ||
+                    whiteNoiseBuffer === null
+                ) {
+                    initializeWhiteNoise(Math.max(effectDuration, 30)); // Create at least 30 seconds of noise
+                }
+
+                // Stop any currently playing source
+                if (whiteNoiseSource && whiteNoiseSource.isPlaying) {
+                    stopWhiteNoise(0);
+                }
+
+                // Always create a fresh source node
+                createWhiteNoiseSource();
+
+                // Constants for gain control
                 const MAX_GAIN = 0.1;
                 const ZERO_GAIN = 0.001;
+                const now = whiteNoiseAudioCtx.currentTime;
 
-                gainNode.gain.setValueAtTime(ZERO_GAIN, now);
-                gainNode.gain.linearRampToValueAtTime(
+                // Configure gain envelope
+                whiteNoiseGainNode.gain.cancelScheduledValues(now);
+                whiteNoiseGainNode.gain.setValueAtTime(ZERO_GAIN, now);
+                whiteNoiseGainNode.gain.linearRampToValueAtTime(
                     MAX_GAIN,
-                    now + (duration / 10) * 1,
+                    now + (effectDuration / 10) * 1,
                 );
-                gainNode.gain.linearRampToValueAtTime(
+                whiteNoiseGainNode.gain.linearRampToValueAtTime(
                     MAX_GAIN / 4,
-                    now + (duration / 10) * 2,
+                    now + (effectDuration / 10) * 2,
                 );
-                gainNode.gain.linearRampToValueAtTime(
+                whiteNoiseGainNode.gain.linearRampToValueAtTime(
                     MAX_GAIN,
-                    now + (duration / 10) * 3,
-                );
-                gainNode.gain.linearRampToValueAtTime(
-                    ZERO_GAIN,
-                    now + duration,
+                    now + (effectDuration / 10) * 3,
                 );
 
-                whiteNoise
-                    .connect(filter)
-                    .connect(gainNode)
-                    .connect(audioCtx.destination);
-                whiteNoise.start(now);
-                whiteNoise.stop(now + duration);
+                // Configure filter envelope
+                whiteNoiseFilter.frequency.cancelScheduledValues(now);
+                whiteNoiseFilter.frequency.setValueAtTime(4000, now);
+                whiteNoiseFilter.frequency.linearRampToValueAtTime(
+                    1000,
+                    now + effectDuration * 0.6,
+                );
+
+                // Start the noise
+                whiteNoiseSource.start(now);
+                whiteNoiseSource.isPlaying = true;
+            }
+
+            function stopWhiteNoise(fadeOutDuration = 0) {
+                if (
+                    !whiteNoiseInitialized ||
+                    whiteNoiseAudioCtx === null ||
+                    whiteNoiseSource === null ||
+                    !whiteNoiseSource.isPlaying
+                ) {
+                    return;
+                }
+
+                if (fadeOutDuration > 0) {
+                    // Fade out, then stop
+                    const now = whiteNoiseAudioCtx.currentTime;
+                    whiteNoiseGainNode.gain.cancelScheduledValues(now);
+                    whiteNoiseGainNode.gain.setValueAtTime(
+                        whiteNoiseGainNode.gain.value,
+                        now,
+                    );
+                    whiteNoiseGainNode.gain.linearRampToValueAtTime(
+                        0.001,
+                        now + fadeOutDuration,
+                    );
+
+                    // Store reference to the current source
+                    const currentSource = whiteNoiseSource;
+                    currentSource.isPlaying = false;
+
+                    // Stop the source after fade out
+                    setTimeout(() => {
+                        try {
+                            currentSource.stop();
+                        } catch (e) {
+                            // Ignore errors if already stopped
+                        }
+                    }, fadeOutDuration * 1000);
+                } else {
+                    // Stop immediately
+                    try {
+                        whiteNoiseSource.stop();
+                    } catch (e) {
+                        // Ignore errors if already stopped
+                    }
+                    whiteNoiseSource.isPlaying = false;
+                    // Reset the gain immediately to avoid click on next play
+                    whiteNoiseGainNode.gain.cancelScheduledValues(
+                        whiteNoiseAudioCtx.currentTime,
+                    );
+                    whiteNoiseGainNode.gain.setValueAtTime(
+                        0,
+                        whiteNoiseAudioCtx.currentTime,
+                    );
+                }
             }
 
             // Add event listeners for ignore section checkboxes
@@ -2022,6 +2140,11 @@
             playButton.addEventListener("click", async function () {
                 soundEffectButtonClick();
 
+                if (globalAudio) {
+                    globalAudio.play();
+                    return;
+                }
+
                 if (!officeCodeField.value) {
                     tuneInBulb.classList.add("error");
                     showError("Please enter office code.");
@@ -2039,26 +2162,11 @@
                 playButton.classList.add("active");
                 pauseButton.classList.remove("active");
 
-                fetchWeather();
-
                 if (true) {
-                    playWhiteNoise(6);
-
-                    for (let i = 0; i < 4; i++) {
-                        setTimeout(() => {
-                            const percent =
-                                Math.floor(Math.random() * (80 - 10)) + 10;
-                            needle.style.left = percent + "%";
-                        }, i * 1000);
-                    }
-
-                    // bring it home...
-                    await new Promise((resolve) => setTimeout(resolve, 1000));
-                    needle.style.left = "10%";
-
-                    await new Promise((resolve) => setTimeout(resolve, 3000));
-                    needle.style.left = "0%";
+                    playWhiteNoise(6); // duration of effects, will loop until stopped
                 }
+
+                await fetchWeather();
 
                 if (!playButton.classList.contains("active")) {
                     return; // hack to stop early
@@ -2135,14 +2243,13 @@
                         cleanForecastContent.textContent,
                     );
                     const voices = speechSynthesis.getVoices();
-
-                    (v) => v.name === "Good News", // this one is fun
-                        (speechUtterance.voice = voices.find(
-                            (v) => v.name === "Ralph",
-                        ));
+                    speechUtterance.voice = voices.find(
+                        (v) => v.name === "Ralph",
+                    );
 
                     if (speechUtterance) {
                         speechUtterance.volume = 1.0;
+                        speechUtterance.pitch = 1.2;
 
                         speechUtterance.onboundary = (event) => {
                             if (event.name === "word") {
@@ -2158,6 +2265,8 @@
                             // Speech finished
                             stopButtonAction();
                         });
+
+                        stopWhiteNoise(1);
 
                         if (speechSynth.paused) {
                             speechSynth.resume();
@@ -2178,7 +2287,7 @@
                     speechSynth.pause();
                 }
 
-                if (globalAudio && !globalAudio.paused) {
+                if (globalAudio) {
                     globalAudio.pause();
                 }
             });
@@ -2203,9 +2312,13 @@
                     globalAudio.pause(); // pause first! else race condition bug I think
                     globalAudio = null;
                 }
+
+                stopWhiteNoise(1);
             }
 
             stopButton.addEventListener("click", stopButtonAction);
+
+            // White noise is now initialized at page load
 
             /**
              *
