@@ -369,6 +369,11 @@ input:checked + .switch-label .slider::before {
         inset 0 0 5px #222;
 }
 
+.bulb.loading {
+    background: var(--orange);
+    animation: blink 0.4s infinite;
+}
+
 .bulb.error {
     animation: flicker 10s infinite ease-in-out;
     background: rgba(250, 70, 27, 1);
@@ -393,6 +398,16 @@ input:checked + .switch-label .slider::before {
     24%,
     55% {
         opacity: 0.8;
+    }
+}
+
+@keyframes blink {
+    0%,
+    100% {
+        background-color: var(--orange);
+    }
+    50% {
+        background-color: #333;
     }
 }
 
