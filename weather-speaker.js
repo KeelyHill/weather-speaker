@@ -48,6 +48,25 @@ let whiteNoiseBuffer = null;
 // Initialize white noise buffer immediately
 initializeWhiteNoise(30);
 
+// Misc other manual replacements for better speech
+const jargon_replacements = {
+  "\n\nSYNOPSIS...\n": "",
+  "\nUPDATE...\n": "",
+  Pac: "Pacific",
+  PacificNW: "the pacific north west",
+  NWS: "National Weather Service",
+  PoP: "Probability of Precipitation",
+  "%": " percent",
+  temps: "temperatures",
+  "t-storms": "thunderstorms",
+  Rh: "relative humidity",
+  RH: "relative humidity",
+  NorCal: "Northern California",
+  mph: "miles per hour",
+  // "0\\.25": "a quarter",
+  // "0\\.5": "a half",
+};
+
 /**
 String and message utils
 **/
@@ -117,6 +136,35 @@ function stateAbbrToFullName(text) {
     /\b([A-Z]{2})\b/g,
     (match, abbr) => stateMap[abbr] || match,
   );
+}
+
+// Function to remove US timezone abbreviations
+function timezoneAbbrToNothing(text) {
+  // List of common timezone abbreviations to remove
+  const timezoneAbbrs = [
+    "EST",
+    "EDT",
+    "CST",
+    "CDT",
+    "MST",
+    "MDT",
+    "PST",
+    "PDT",
+    "AKST",
+    "AKDT",
+    "HST",
+    "HDT",
+    "AEST",
+    "AEDT",
+    "UTC",
+    "GMT",
+  ];
+
+  // Create regex pattern from timezone abbreviations
+  const pattern = new RegExp("\\b(" + timezoneAbbrs.join(" |") + ")\\b", "g");
+
+  // Remove timezone abbreviations (replace with empty string)
+  return text.replace(pattern, "");
 }
 
 function numberToWords(n) {
@@ -301,35 +349,6 @@ function getTimeBasedGreetingPhrase(date = new Date()) {
   }
 }
 
-// Function to remove US timezone abbreviations
-function timezoneAbbrToNothing(text) {
-  // List of common timezone abbreviations to remove
-  const timezoneAbbrs = [
-    "EST",
-    "EDT",
-    "CST",
-    "CDT",
-    "MST",
-    "MDT",
-    "PST",
-    "PDT",
-    "AKST",
-    "AKDT",
-    "HST",
-    "HDT",
-    "AEST",
-    "AEDT",
-    "UTC",
-    "GMT",
-  ];
-
-  // Create regex pattern from timezone abbreviations
-  const pattern = new RegExp("\\b(" + timezoneAbbrs.join(" |") + ")\\b", "g");
-
-  // Remove timezone abbreviations (replace with empty string)
-  return text.replace(pattern, "");
-}
-
 function extractUniqueNames(text) {
   const names = [...text.matchAll(/\.\.+([^\n]+)/g)].map((m) => m[1].trim());
   const unique = [...new Set(names)];
@@ -473,7 +492,7 @@ function makeTextSpeakable(rawAFDText, nextGridForecast) {
     // remove since I don't want to convert to speakable inline like this
     .replace(/^Updated at.*\n/gm, "")
 
-    // clean up ranges (5-6 becomes 5 to 6)
+    // clean up ranges (e.g. 5-6 becomes 5 to 6)
     .replace(/(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)/g, "$1 to $2")
 
     // spell out inches
@@ -493,27 +512,8 @@ function makeTextSpeakable(rawAFDText, nextGridForecast) {
 
     .replace(/\s+$/g, ""); // trim end of entire string
 
-  // Misc other manual replacements for better speech
-  const replacements = {
-    "\n\nSYNOPSIS...\n": "",
-    "\nUPDATE...\n": "",
-    Pac: "Pacific",
-    PacificNW: "the pacific north west",
-    NWS: "National Weather Service",
-    PoP: "Probability of Precipitation",
-    "%": " percent",
-    temps: "temperatures",
-    "t-storms": "thunderstorms",
-    Rh: "relative humidity",
-    RH: "relative humidity",
-    NorCal: "Northern California",
-    mph: "miles per hour",
-    // "0\\.25": "a quarter",
-    // "0\\.5": "a half",
-  };
-
   // Iterate over the replacements dictionary and replace each key with its value
-  for (const [key, value] of Object.entries(replacements)) {
+  for (const [key, value] of Object.entries(jargon_replacements)) {
     newText = newText.replace(new RegExp(key, "g"), value);
   }
 
@@ -521,8 +521,10 @@ function makeTextSpeakable(rawAFDText, nextGridForecast) {
 }
 
 /**
-Weather
-**/
+ *
+ * Weather
+ *
+ **/
 
 async function fetchWeather() {
   // console.log(`Office code: ${officeCodeField.value}`);
@@ -610,58 +612,10 @@ async function fetchWeather() {
 }
 
 /**
-Speaking stuff
-**/
-
-function updateElevenLabsUsage() {
-  elevenLabsBulb.classList.remove("error");
-
-  const apiKey = getElevenLabsApiKeyFromStorage();
-
-  if (!apiKey) {
-    elevenLabsBulb.classList.add("error");
-    console.log("No ElevenLabs API Key");
-    return;
-  }
-
-  elevenLabsBulb.classList.add("loading");
-
-  fetch("https://api.elevenlabs.io/v1/user", {
-    method: "GET",
-    headers: {
-      "xi-api-key": apiKey,
-    },
-  })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(`ElevenLabs API error: ${response.status}`);
-        console.log(response.json());
-        elevenLabsBulb.classList.add("error");
-      }
-      return response.json();
-    })
-    .then((data) => {
-      elevenLabsBulb.classList.remove("loading");
-      elevenLabsBulb.classList.add("on");
-
-      const charUsed = data.subscription.character_count;
-      const charLimit = data.subscription.character_limit;
-      const percentUsed = (charUsed / charLimit) * 100;
-
-      glob_users_name = data.first_name;
-
-      elevenlabsUsage.textContent = `${percentUsed.toFixed(2)}% used`;
-
-      console.log(`ElevenLabs: ${percentUsed.toFixed(2)}% used`);
-
-      fetchWeather();
-    })
-    .catch((error) => {
-      elevenLabsBulb.classList.add("error");
-      console.error("Error with ElevenLabs API:", error);
-      showError(`Error: ${error.message}`);
-    });
-}
+ *
+ * Audio stuff
+ *
+ **/
 
 function setupAudioAnalyser(audioEl) {
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -763,376 +717,6 @@ function playURLAudio(audioUrl) {
           "Audio playback was blocked by your browser. Please click the play button again.",
         );
       });
-  }
-}
-
-// Function to use ElevenLabs for text-to-speech
-async function speakWithElevenLabs(text) {
-  if (globalAudio) {
-    return null;
-  }
-
-  // Check if we have saved audio for this text
-  const savedBlob = await loadAudioFromStorageCache(text, "elevenlabs-cache");
-  if (savedBlob) {
-    const audioUrl = URL.createObjectURL(savedBlob);
-    console.log("Using saved audio:", audioUrl);
-    return audioUrl;
-  }
-
-  const apiKey = document.getElementById("elevenlabs-api-key").value;
-
-  const voiceId = document.getElementById("elevenlabs-voice").value;
-
-  if (!apiKey) {
-    showError("Please enter your ElevenLabs API key");
-    return null;
-  }
-
-  if (!voiceId) {
-    showError("Please enter a ElevenLabs voice ID");
-    return null;
-  }
-
-  updateElevenLabsUsage();
-
-  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
-
-  const headers = {
-    Accept: "audio/mpeg",
-    "Content-Type": "application/json",
-    "xi-api-key": apiKey,
-  };
-
-  const body = JSON.stringify({
-    text: text,
-    model_id: "eleven_turbo_v2_5", // this is the cheaper one
-    voice_settings: {
-      stability: 0.5,
-      similarity_boost: 0.5,
-      // speed: 1.25,
-    },
-  });
-
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: headers,
-      body: body,
-    });
-
-    if (!response.ok) {
-      console.log(response);
-      throw new Error(`ElevenLabs API error: ${response.status}`);
-    }
-
-    updateElevenLabsUsage();
-    const blob = await response.blob();
-    saveAudioToStorageCache(text, blob, "elevenlabs-cache");
-
-    const audioUrl = URL.createObjectURL(blob);
-    console.log(`ElevenLabs Resp Blob: ${blob}`);
-    console.log(`ElevenLabs Resp URL: ${audioUrl}`);
-
-    return audioUrl;
-  } catch (error) {
-    console.error("Error with ElevenLabs API:", error);
-    showError(`ElevenLabs TTS error: ${error.message}`);
-
-    needle.classList.remove("loading");
-    elevenLabsBulb.classList.add("error");
-    elevenLabsBulb.classList.remove("on");
-    elevenLabsBulb.classList.remove("loading");
-
-    return null;
-  }
-}
-
-function saveApiKeyToStorage() {
-  const apiKey = document.getElementById("elevenlabs-api-key").value;
-  localStorage.setItem("elevenlabsApiKey", apiKey);
-  updateElevenLabsUsage();
-}
-
-function getElevenLabsApiKeyFromStorage() {
-  const apiKey = localStorage.getItem("elevenlabsApiKey");
-  if (apiKey) {
-    document.getElementById("elevenlabs-api-key").value = apiKey;
-    return apiKey;
-  }
-  return null;
-}
-
-function saveOpenAIApiKeyToStorage() {
-  const apiKey = document.getElementById("openai-api-key").value;
-  localStorage.setItem("openaiApiKey", apiKey);
-  updateElevenLabsUsage();
-}
-
-function saveResembleApiKeyToStorage() {
-  const apiKey = document.getElementById("resemble-api-key").value;
-  localStorage.setItem("resembleApiKey", apiKey);
-}
-
-function saveResembleVoiceUUIDToStorage() {
-  const voiceUUID = document.getElementById("resemble-voice-uuid").value;
-  localStorage.setItem("resembleVoiceUUID", voiceUUID);
-}
-
-function getOpenAIApiKeyFromStorage() {
-  const apiKey = localStorage.getItem("openaiApiKey");
-  if (apiKey) {
-    document.getElementById("openai-api-key").value = apiKey;
-    return apiKey;
-  }
-  return null;
-}
-
-function getResembleApiKeyFromStorage() {
-  const apiKey = localStorage.getItem("resembleApiKey");
-  if (apiKey) {
-    document.getElementById("resemble-api-key").value = apiKey;
-    return apiKey;
-  }
-  return null;
-}
-
-function getResembleVoiceUUIDFromStorage() {
-  const voiceUUID = localStorage.getItem("resembleVoiceUUID");
-  if (voiceUUID) {
-    document.getElementById("resemble-voice-uuid").value = voiceUUID;
-    return voiceUUID;
-  }
-  return null;
-}
-
-async function speakWithOpenAI(text) {
-  if (globalAudio) {
-    return null;
-  }
-
-  const savedBlob = await loadAudioFromStorageCache(text, "openai-cache");
-  if (savedBlob) {
-    const audioUrl = URL.createObjectURL(savedBlob);
-    console.log("Using saved audio:", audioUrl);
-    playURLAudio(audioUrl);
-    openaiStatusBulb.classList.add("on");
-    return;
-  }
-
-  const apiKey = getOpenAIApiKeyFromStorage();
-  if (!apiKey) {
-    showError(
-      "OpenAI API key not found. Please enter your API key in the settings.",
-    );
-    openaiStatusBulb.classList.add("error");
-    return;
-  }
-
-  openaiStatusBulb.classList.remove("error");
-  openaiStatusBulb.classList.add("loading");
-  needle.classList.add("loading");
-
-  // TODO: right now one request maximum is 4096 chars
-  try {
-    const response = await fetch("https://api.openai.com/v1/audio/speech", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini-tts",
-        input: text,
-        instructions:
-          "Voice: Deep public radio host. Clean, cool, and consistent, but not monotone. Personality: Be engaging and show personal interest in the topic. Explain 'why', not just 'what'. Speed: Keep a slightly faster than normal pace, do not drag. Finish sentences at little faster. Pronunciation: Words should be pronounced clearly, especially technical ones. Some of the technical terms are several words and should flow together.",
-        voice: "verse",
-        speed: 1,
-      }),
-    });
-
-    if (!response.ok) {
-      console.log(response);
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    console.log("OpenAI: response okay.");
-    const blob = await response.blob();
-    const audioUrl = URL.createObjectURL(blob);
-
-    console.log(`OpenAI Resp Blob: ${blob}`);
-    console.log(`OpenAI Resp URL: ${audioUrl}`);
-
-    await saveAudioToStorageCache(text, blob, "openai-cache");
-
-    return audioUrl;
-  } catch (error) {
-    console.error("OpenAI TTS error:", error);
-    showError(`OpenAI TTS error: ${error.message}`);
-
-    openaiStatusBulb.classList.add("error");
-    openaiStatusBulb.classList.remove("on");
-    return null;
-  } finally {
-    openaiStatusBulb.classList.remove("loading");
-    needle.classList.remove("loading");
-    openaiStatusBulb.classList.add("on");
-  }
-}
-
-async function speakWithResemble(text) {
-  if (globalAudio) {
-    return null;
-  }
-
-  const savedBlob = await loadAudioFromStorageCache(text, "resemble-cache");
-  if (savedBlob) {
-    const audioUrl = URL.createObjectURL(savedBlob);
-    console.log("Using saved audio from cache:", audioUrl);
-    resembleStatusBulb.classList.add("on");
-    return audioUrl; // Return URL instead of playing directly
-  }
-
-  const apiKey = getResembleApiKeyFromStorage();
-  const voiceUUID = getResembleVoiceUUIDFromStorage();
-
-  if (!apiKey) {
-    showError(
-      "Resemble API Token not found. Please enter your API Token in the settings.",
-    );
-    resembleStatusBulb.classList.add("error");
-    return;
-  }
-
-  if (!voiceUUID) {
-    console.log("Using default Resemble Voice UUID: f4da4639");
-    // Continue with default UUID
-  }
-
-  resembleStatusBulb.classList.remove("error");
-  resembleStatusBulb.classList.add("loading");
-  needle.classList.add("loading");
-
-  // TODO: right now one request maximum is 3000 chars
-  try {
-    // Use the correct /synthesize endpoint
-    const synthesizeResponse = await fetch(
-      "https://f.cluster.resemble.ai/synthesize",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "Accept-Encoding": "gzip, deflate, br",
-        },
-        body: JSON.stringify({
-          voice_uuid: voiceUUID || "f4da4639",
-          data: text,
-          output_format: "mp3",
-          title: "NSW Weather Forecast",
-        }),
-      },
-    );
-
-    if (!synthesizeResponse.ok) {
-      console.log(synthesizeResponse);
-      throw new Error(`Resemble API error: ${synthesizeResponse.status}`);
-    }
-
-    // Parse the JSON response which contains base64-encoded audio
-    const responseData = await synthesizeResponse.json();
-
-    if (!responseData.success) {
-      throw new Error(
-        `Resemble synthesis failed: ${responseData.issues?.join(", ") || "Unknown error"}`,
-      );
-    }
-
-    console.log("Resemble response:", responseData);
-
-    // Convert base64 audio_content to a binary Blob
-    const binaryString = atob(responseData.audio_content);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-
-    // Create a blob with the appropriate MIME type
-    const mimeType =
-      responseData.output_format === "mp3" ? "audio/mpeg" : "audio/wav";
-    const blob = new Blob([bytes], { type: mimeType });
-    const audioUrl = URL.createObjectURL(blob);
-
-    console.log(`Resemble audio duration: ${responseData.duration} seconds`);
-    console.log(`Resemble audio URL: ${audioUrl}`);
-
-    await saveAudioToStorageCache(text, blob, "resemble-cache");
-
-    return audioUrl;
-  } catch (error) {
-    console.error("Resemble TTS error:", error);
-    showError(`Resemble TTS error: ${error.message}`);
-
-    resembleStatusBulb.classList.add("error");
-    resembleStatusBulb.classList.remove("on");
-    return null;
-  } finally {
-    needle.classList.remove("loading");
-    resembleStatusBulb.classList.remove("loading");
-    resembleStatusBulb.classList.add("on");
-  }
-}
-
-function saveIgnoreSectionsToStorage() {
-  const ignoreSections = {
-    shortTerm: document.getElementById("ignore-short-term").checked,
-    longTerm: document.getElementById("ignore-long-term").checked,
-    marine: document.getElementById("ignore-marine").checked,
-    aviation: document.getElementById("ignore-aviation").checked,
-    watches: document.getElementById("ignore-watches").checked,
-    preliminaryPoint: document.getElementById("ignore-preliminary-point")
-      .checked,
-  };
-  localStorage.setItem("ignoreSections", JSON.stringify(ignoreSections));
-}
-
-function loadIgnoreSectionsFromStorage() {
-  const storedIgnoreSections = localStorage.getItem("ignoreSections");
-  if (storedIgnoreSections) {
-    try {
-      const ignoreSections = JSON.parse(storedIgnoreSections);
-      document.getElementById("ignore-short-term").checked =
-        ignoreSections.shortTerm !== undefined
-          ? ignoreSections.shortTerm
-          : true;
-      document.getElementById("ignore-long-term").checked =
-        ignoreSections.longTerm !== undefined ? ignoreSections.longTerm : false;
-      document.getElementById("ignore-marine").checked =
-        ignoreSections.marine !== undefined ? ignoreSections.marine : false;
-      document.getElementById("ignore-aviation").checked =
-        ignoreSections.aviation !== undefined ? ignoreSections.aviation : true;
-      document.getElementById("ignore-watches").checked =
-        ignoreSections.watches !== undefined ? ignoreSections.watches : true;
-      document.getElementById("ignore-preliminary-point").checked =
-        ignoreSections.preliminaryPoint !== undefined
-          ? ignoreSections.preliminaryPoint
-          : false;
-    } catch (e) {
-      console.log("Error loading ignore sections from storage:", e);
-    }
-  }
-}
-
-function saveVoiceIdToStorage() {
-  const voiceId = document.getElementById("elevenlabs-voice").value;
-  localStorage.setItem("elevenlabsVoiceId", voiceId);
-  updateElevenLabsUsage();
-}
-
-function loadVoiceIdFromStorage() {
-  const voiceId = localStorage.getItem("elevenlabsVoiceId");
-  if (voiceId) {
-    document.getElementById("elevenlabs-voice").value = voiceId;
   }
 }
 
@@ -1339,16 +923,434 @@ function stopWhiteNoise(fadeOutDuration = 0) {
   }
 }
 
-// Add event listeners for ignore section checkboxes
-function updateProcessedText() {
-  fetchWeather();
-  saveIgnoreSectionsToStorage();
+/**
+ *
+ * Speaking stuff
+ *
+ **/
+
+function updateElevenLabsUsage() {
+  elevenLabsBulb.classList.remove("error");
+
+  const apiKey = getElevenLabsApiKeyFromStorage();
+
+  if (!apiKey) {
+    elevenLabsBulb.classList.add("error");
+    console.log("No ElevenLabs API Key");
+    return;
+  }
+
+  elevenLabsBulb.classList.add("loading");
+
+  fetch("https://api.elevenlabs.io/v1/user", {
+    method: "GET",
+    headers: {
+      "xi-api-key": apiKey,
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`ElevenLabs API error: ${response.status}`);
+        console.log(response.json());
+        elevenLabsBulb.classList.add("error");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      elevenLabsBulb.classList.remove("loading");
+      elevenLabsBulb.classList.add("on");
+
+      const charUsed = data.subscription.character_count;
+      const charLimit = data.subscription.character_limit;
+      const percentUsed = (charUsed / charLimit) * 100;
+
+      glob_users_name = data.first_name;
+
+      console.log(`ElevenLabs: ${percentUsed.toFixed(2)}% used`);
+
+      fetchWeather();
+    })
+    .catch((error) => {
+      elevenLabsBulb.classList.add("error");
+      console.error("Error with ElevenLabs API:", error);
+      showError(`Error: ${error.message}`);
+    });
 }
 
-// Show error message
-function showError(message) {
-  errorMessageBox.textContent = message;
-  errorMessageBox.style.display = "block";
+// Function to use ElevenLabs for text-to-speech
+async function speakWithElevenLabs(text) {
+  if (globalAudio) {
+    return null;
+  }
+
+  // Check if we have saved audio for this text
+  const savedBlob = await loadAudioFromStorageCache(text, "elevenlabs-cache");
+  if (savedBlob) {
+    const audioUrl = URL.createObjectURL(savedBlob);
+    console.log("Using saved audio:", audioUrl);
+    return audioUrl;
+  }
+
+  const apiKey = document.getElementById("elevenlabs-api-key").value;
+
+  const voiceId = document.getElementById("elevenlabs-voice").value;
+
+  if (!apiKey) {
+    showError("Please enter your ElevenLabs API key");
+    return null;
+  }
+
+  if (!voiceId) {
+    showError("Please enter a ElevenLabs voice ID");
+    return null;
+  }
+
+  updateElevenLabsUsage();
+
+  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
+
+  const headers = {
+    Accept: "audio/mpeg",
+    "Content-Type": "application/json",
+    "xi-api-key": apiKey,
+  };
+
+  const body = JSON.stringify({
+    text: text,
+    model_id: "eleven_turbo_v2_5", // this is the cheaper one
+    voice_settings: {
+      stability: 0.5,
+      similarity_boost: 0.5,
+      // speed: 1.25,
+    },
+  });
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: headers,
+      body: body,
+    });
+
+    if (!response.ok) {
+      console.log(response);
+      throw new Error(`ElevenLabs API error: ${response.status}`);
+    }
+
+    updateElevenLabsUsage();
+    const blob = await response.blob();
+    saveAudioToStorageCache(text, blob, "elevenlabs-cache");
+
+    const audioUrl = URL.createObjectURL(blob);
+    console.log(`ElevenLabs Resp Blob: ${blob}`);
+    console.log(`ElevenLabs Resp URL: ${audioUrl}`);
+
+    return audioUrl;
+  } catch (error) {
+    console.error("Error with ElevenLabs API:", error);
+    showError(`ElevenLabs TTS error: ${error.message}`);
+
+    needle.classList.remove("loading");
+    elevenLabsBulb.classList.add("error");
+    elevenLabsBulb.classList.remove("on");
+    elevenLabsBulb.classList.remove("loading");
+
+    return null;
+  }
+}
+
+async function speakWithOpenAI(text) {
+  if (globalAudio) {
+    return null;
+  }
+
+  const savedBlob = await loadAudioFromStorageCache(text, "openai-cache");
+  if (savedBlob) {
+    const audioUrl = URL.createObjectURL(savedBlob);
+    console.log("Using saved audio:", audioUrl);
+    playURLAudio(audioUrl);
+    openaiStatusBulb.classList.add("on");
+    return;
+  }
+
+  const apiKey = getOpenAIApiKeyFromStorage();
+  if (!apiKey) {
+    showError(
+      "OpenAI API key not found. Please enter your API key in the settings.",
+    );
+    openaiStatusBulb.classList.add("error");
+    return;
+  }
+
+  openaiStatusBulb.classList.remove("error");
+  openaiStatusBulb.classList.add("loading");
+  needle.classList.add("loading");
+
+  // TODO: right now one request maximum is 4096 chars
+  try {
+    const response = await fetch("https://api.openai.com/v1/audio/speech", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini-tts",
+        input: text,
+        instructions:
+          "Voice: Deep public radio host. Clean, cool, and consistent, but not monotone. Personality: Be engaging and show personal interest in the topic. Explain 'why', not just 'what'. Speed: Keep a slightly faster than normal pace, do not drag. Finish sentences at little faster. Pronunciation: Words should be pronounced clearly, especially technical ones. Some of the technical terms are several words and should flow together.",
+        voice: "verse",
+        speed: 1,
+      }),
+    });
+
+    if (!response.ok) {
+      console.log(response);
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    console.log("OpenAI: response okay.");
+    const blob = await response.blob();
+    const audioUrl = URL.createObjectURL(blob);
+
+    console.log(`OpenAI Resp Blob: ${blob}`);
+    console.log(`OpenAI Resp URL: ${audioUrl}`);
+
+    await saveAudioToStorageCache(text, blob, "openai-cache");
+
+    return audioUrl;
+  } catch (error) {
+    console.error("OpenAI TTS error:", error);
+    showError(`OpenAI TTS error: ${error.message}`);
+
+    openaiStatusBulb.classList.add("error");
+    openaiStatusBulb.classList.remove("on");
+    return null;
+  } finally {
+    openaiStatusBulb.classList.remove("loading");
+    needle.classList.remove("loading");
+    openaiStatusBulb.classList.add("on");
+  }
+}
+
+async function speakWithResemble(text) {
+  if (globalAudio) {
+    return null;
+  }
+
+  const savedBlob = await loadAudioFromStorageCache(text, "resemble-cache");
+  if (savedBlob) {
+    const audioUrl = URL.createObjectURL(savedBlob);
+    console.log("Using saved audio from cache:", audioUrl);
+    resembleStatusBulb.classList.add("on");
+    return audioUrl; // Return URL instead of playing directly
+  }
+
+  const apiKey = getResembleApiKeyFromStorage();
+  const voiceUUID = getResembleVoiceUUIDFromStorage();
+
+  if (!apiKey) {
+    showError(
+      "Resemble API Token not found. Please enter your API Token in the settings.",
+    );
+    resembleStatusBulb.classList.add("error");
+    return;
+  }
+
+  if (!voiceUUID) {
+    console.log("Using default Resemble Voice UUID: f4da4639");
+    // Continue with default UUID
+  }
+
+  resembleStatusBulb.classList.remove("error");
+  resembleStatusBulb.classList.add("loading");
+  needle.classList.add("loading");
+
+  // TODO: right now one request maximum is 3000 chars
+  try {
+    // Use the correct /synthesize endpoint
+    const synthesizeResponse = await fetch(
+      "https://f.cluster.resemble.ai/synthesize",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "Accept-Encoding": "gzip, deflate, br",
+        },
+        body: JSON.stringify({
+          voice_uuid: voiceUUID || "f4da4639",
+          data: text,
+          output_format: "mp3",
+          title: "NSW Weather Forecast",
+        }),
+      },
+    );
+
+    if (!synthesizeResponse.ok) {
+      console.log(synthesizeResponse);
+      throw new Error(`Resemble API error: ${synthesizeResponse.status}`);
+    }
+
+    // Parse the JSON response which contains base64-encoded audio
+    const responseData = await synthesizeResponse.json();
+
+    if (!responseData.success) {
+      throw new Error(
+        `Resemble synthesis failed: ${responseData.issues?.join(", ") || "Unknown error"}`,
+      );
+    }
+
+    console.log("Resemble response:", responseData);
+
+    // Convert base64 audio_content to a binary Blob
+    const binaryString = atob(responseData.audio_content);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    // Create a blob with the appropriate MIME type
+    const mimeType =
+      responseData.output_format === "mp3" ? "audio/mpeg" : "audio/wav";
+    const blob = new Blob([bytes], { type: mimeType });
+    const audioUrl = URL.createObjectURL(blob);
+
+    console.log(`Resemble audio duration: ${responseData.duration} seconds`);
+    console.log(`Resemble audio URL: ${audioUrl}`);
+
+    await saveAudioToStorageCache(text, blob, "resemble-cache");
+
+    return audioUrl;
+  } catch (error) {
+    console.error("Resemble TTS error:", error);
+    showError(`Resemble TTS error: ${error.message}`);
+
+    resembleStatusBulb.classList.add("error");
+    resembleStatusBulb.classList.remove("on");
+    return null;
+  } finally {
+    needle.classList.remove("loading");
+    resembleStatusBulb.classList.remove("loading");
+    resembleStatusBulb.classList.add("on");
+  }
+}
+
+/**
+ *
+ * Storage
+ *
+ **/
+
+function saveIgnoreSectionsToStorage() {
+  const ignoreSections = {
+    shortTerm: document.getElementById("ignore-short-term").checked,
+    longTerm: document.getElementById("ignore-long-term").checked,
+    marine: document.getElementById("ignore-marine").checked,
+    aviation: document.getElementById("ignore-aviation").checked,
+    watches: document.getElementById("ignore-watches").checked,
+    preliminaryPoint: document.getElementById("ignore-preliminary-point")
+      .checked,
+  };
+  localStorage.setItem("ignoreSections", JSON.stringify(ignoreSections));
+}
+
+function loadIgnoreSectionsFromStorage() {
+  const storedIgnoreSections = localStorage.getItem("ignoreSections");
+  if (storedIgnoreSections) {
+    try {
+      const ignoreSections = JSON.parse(storedIgnoreSections);
+      document.getElementById("ignore-short-term").checked =
+        ignoreSections.shortTerm !== undefined
+          ? ignoreSections.shortTerm
+          : true;
+      document.getElementById("ignore-long-term").checked =
+        ignoreSections.longTerm !== undefined ? ignoreSections.longTerm : false;
+      document.getElementById("ignore-marine").checked =
+        ignoreSections.marine !== undefined ? ignoreSections.marine : false;
+      document.getElementById("ignore-aviation").checked =
+        ignoreSections.aviation !== undefined ? ignoreSections.aviation : true;
+      document.getElementById("ignore-watches").checked =
+        ignoreSections.watches !== undefined ? ignoreSections.watches : true;
+      document.getElementById("ignore-preliminary-point").checked =
+        ignoreSections.preliminaryPoint !== undefined
+          ? ignoreSections.preliminaryPoint
+          : false;
+    } catch (e) {
+      console.log("Error loading ignore sections from storage:", e);
+    }
+  }
+}
+
+function saveElevenLabsApiKeyToStorage() {
+  const apiKey = document.getElementById("elevenlabs-api-key").value;
+  localStorage.setItem("elevenlabsApiKey", apiKey);
+  updateElevenLabsUsage();
+}
+
+function getElevenLabsApiKeyFromStorage() {
+  const apiKey = localStorage.getItem("elevenlabsApiKey");
+  if (apiKey) {
+    document.getElementById("elevenlabs-api-key").value = apiKey;
+    return apiKey;
+  }
+  return null;
+}
+
+function saveOpenAIApiKeyToStorage() {
+  const apiKey = document.getElementById("openai-api-key").value;
+  localStorage.setItem("openaiApiKey", apiKey);
+  updateElevenLabsUsage();
+}
+
+function saveResembleApiKeyToStorage() {
+  const apiKey = document.getElementById("resemble-api-key").value;
+  localStorage.setItem("resembleApiKey", apiKey);
+}
+
+function saveResembleVoiceUUIDToStorage() {
+  const voiceUUID = document.getElementById("resemble-voice-uuid").value;
+  localStorage.setItem("resembleVoiceUUID", voiceUUID);
+}
+
+function getOpenAIApiKeyFromStorage() {
+  const apiKey = localStorage.getItem("openaiApiKey");
+  if (apiKey) {
+    document.getElementById("openai-api-key").value = apiKey;
+    return apiKey;
+  }
+  return null;
+}
+
+function getResembleApiKeyFromStorage() {
+  const apiKey = localStorage.getItem("resembleApiKey");
+  if (apiKey) {
+    document.getElementById("resemble-api-key").value = apiKey;
+    return apiKey;
+  }
+  return null;
+}
+
+function getResembleVoiceUUIDFromStorage() {
+  const voiceUUID = localStorage.getItem("resembleVoiceUUID");
+  if (voiceUUID) {
+    document.getElementById("resemble-voice-uuid").value = voiceUUID;
+    return voiceUUID;
+  }
+  return null;
+}
+
+function saveVoiceIdToStorage() {
+  const voiceId = document.getElementById("elevenlabs-voice").value;
+  localStorage.setItem("elevenlabsVoiceId", voiceId);
+  updateElevenLabsUsage();
+}
+
+function loadElevenLabsVoiceIdFromStorage() {
+  const voiceId = localStorage.getItem("elevenlabsVoiceId");
+  if (voiceId) {
+    document.getElementById("elevenlabs-voice").value = voiceId;
+  }
 }
 
 async function generateTextHash(text) {
@@ -1449,6 +1451,12 @@ window.addEventListener("error", function (e) {
 /**
  * Event handeling
  **/
+
+// Add event listeners for ignore section checkboxes
+function updateProcessedText() {
+  fetchWeather();
+  saveIgnoreSectionsToStorage();
+}
 
 document
   .getElementById("ignore-short-term")
@@ -1561,7 +1569,7 @@ playButton.addEventListener("click", async function () {
   voiceResemble.disabled = true;
 
   if (true) {
-    playWhiteNoise(6); // duration of effects, will loop until stopped
+    playWhiteNoise(8); // duration of effects, will loop until stopped
   }
 
   await fetchWeather();
@@ -1721,8 +1729,6 @@ function stopButtonAction() {
 
 stopButton.addEventListener("click", stopButtonAction);
 
-// White noise is now initialized at page load
-
 /**
  *
  *
@@ -1731,13 +1737,20 @@ stopButton.addEventListener("click", stopButtonAction);
  *
  **/
 
+function showError(message) {
+  errorMessageBox.textContent = message;
+  errorMessageBox.style.display = "block";
+}
+
 loadIgnoreSectionsFromStorage();
 
-getElevenLabsApiKeyFromStorage();
+if (getElevenLabsApiKeyFromStorage()) {
+  updateElevenLabsUsage();
+}
 getOpenAIApiKeyFromStorage();
 getResembleApiKeyFromStorage();
 getResembleVoiceUUIDFromStorage();
-loadVoiceIdFromStorage();
+loadElevenLabsVoiceIdFromStorage();
 
 // load office code from URL if exists
 const urlParams = new URLSearchParams(window.location.search);
@@ -1747,8 +1760,4 @@ officeGridY.value = urlParams.get("y");
 
 if (officeCodeField.value) {
   fetchWeather();
-}
-
-if (getElevenLabsApiKeyFromStorage()) {
-  updateElevenLabsUsage();
 }
