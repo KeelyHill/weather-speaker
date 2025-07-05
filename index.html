@@ -352,6 +352,7 @@
                         <input
                             type="text"
                             id="resemble-voice-uuid"
+                            value="f4da4639"
                             placeholder="Enter your Voice UUID"
                             oninput="saveResembleVoiceUUIDToCookies()"
                         />
@@ -873,6 +874,11 @@
             function makeTextSpeakable(rawAFDText, nextGridForecast) {
                 var newText = "";
 
+                // TODO: split this out so:
+                // - cache can be used when just the time in the greeting changes
+                // and so this can be played while loading the longer text
+                // I started to implement, but was fighting global audio overwrite,
+                // I think it's gonna need a little rearch for audio queing or something.
                 newText += makeGreetingText();
 
                 ///////////////////////
