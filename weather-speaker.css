@@ -63,6 +63,10 @@ a:visited {
     padding-bottom: 8px;
 }
 
+.settings-section input {
+    min-width: 20rem;
+}
+
 .radio-platform {
     background: #111;
     border-radius: 1em;
@@ -595,7 +599,7 @@ input:checked + .switch-label .slider::before {
 .text-section {
     display: flex;
     flex-direction: row;
-    max-height: 250px;
+    max-height: 300px;
 }
 
 .text-section div {

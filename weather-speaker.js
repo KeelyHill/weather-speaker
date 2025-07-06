@@ -10,20 +10,16 @@ const stopButton = document.getElementById("stop-button");
 
 const needle = document.getElementById("needle");
 
-const elevenLabsBulb = document.getElementById("eleven-labs-status-bulb");
-
-const tuneInBulb = document.getElementById("tune-in-bulb");
-
 const voiceWebBrowser = document.getElementById("voice-web-browser");
 const voiceElevenLabs = document.getElementById("voice-elevenlabs");
+const elevenlabsUsage = document.getElementById("elevenlabs-usage");
 const voiceOpenAI = document.getElementById("voice-openai");
 const voiceResemble = document.getElementById("voice-resemble");
 
+const tuneInBulb = document.getElementById("tune-in-bulb");
+const elevenLabsBulb = document.getElementById("eleven-labs-status-bulb");
 const openaiStatusBulb = document.getElementById("openai-status-bulb");
-
 const resembleStatusBulb = document.getElementById("resemble-status-bulb");
-
-const elevenlabsUsage = document.getElementById("elevenlabs-usage");
 
 const cleanForecastLineNumbers = document.getElementById(
   "clean-forecast-content-line-numbers",

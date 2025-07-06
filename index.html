@@ -284,6 +284,7 @@
                             placeholder="Enter your ElevenLabs API key"
                             oninput="saveElevenLabsApiKeyToStorage()"
                         />
+                        <small>(They have a free option)</small>
                     </div>
                     <div>
                         <label for="elevenlabs-voice"
@@ -364,7 +365,7 @@
             <h2>Text Processing</h2>
 
             <div style="margin-bottom: 20px">
-                <h3>Ignore Sections:</h3>
+                <h3>Ignore Sections</h3>
                 <div
                     style="
                         display: flex;
@@ -382,7 +383,7 @@
                         <span>LONG TERM</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 5px">
-                        <input type="checkbox" id="ignore-marine" />
+                        <input type="checkbox" id="ignore-marine" checked />
                         <span>MARINE</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 5px">
@@ -402,9 +403,10 @@
                         <span>PRELIMINARY POINT</span>
                     </label>
                 </div>
+                <small>(Anything checked will not be spoken)</small>
             </div>
 
-            <h3>Raw/Processed Text:</h3>
+            <h3>Raw/Cleaned Text</h3>
 
             <div class="text-section">
                 <div class="preformat" id="raw-forecast-content"></div>
@@ -417,7 +419,7 @@
                 characters.
             </div>
 
-            <hr />
+            <hr style="margin: 50px 0px;" />
 
             <footer>
                 <p>
@@ -434,7 +436,7 @@
                     This is an toy application and not affiliated with the NWS
                     or NOAA.
                     <br />
-                    API keys are stored in cookies.
+                    API keys are stored in the browser's local storage.
                     <br />
                     Voice audio is generated, not pre-recorded.
                 </p>
